@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mytour/page/naver_map.dart';
+import 'package:mytour/page/login_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,7 +23,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       navigatorObservers: [routeObserver],
-      home: const SplashScreen(), // 앱의 처음 화면을 스플래시 화면으로 설정합니다.
+      home: const login_page(), //TODO: 마지막에는 LOGIN_PAGE로
+
     );
   }
 }

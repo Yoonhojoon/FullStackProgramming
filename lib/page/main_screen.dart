@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'naver_map_screen.dart';
+import 'home_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -62,17 +63,6 @@ class _MainScreenState extends State<MainScreen> {
   }
 }
 
-// Home 화면 예제
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text('Home Screen'),
-    );
-  }
-}
 
 // Profile 화면 예제
 class ProfileScreen extends StatelessWidget {

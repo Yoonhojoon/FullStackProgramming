@@ -1,12 +1,17 @@
 package com.fullstack.demo.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
+@Getter
+@Setter
 @Table(name = "Post")
 public class Post {
 
@@ -47,6 +52,11 @@ public class Post {
     @Column(length = 255)
     private String postCategory;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "board_id", nullable = false)
+    private Board board;  // Board와의 관계 설정
+
+
     @ManyToMany
     @JoinTable(
             name = "PostCategory",
@@ -54,6 +64,13 @@ public class Post {
             inverseJoinColumns = @JoinColumn(name = "category_id")
     )
     private Set<Category> categories = new HashSet<>();
+
+
+    // Getters and setters
+
+    public void setBoard(Board board) {
+        this.board = board;
+    }
 
     // Getters and setters
 }

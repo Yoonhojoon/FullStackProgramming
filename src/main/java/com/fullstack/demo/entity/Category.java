@@ -9,24 +9,15 @@ import java.util.Set;
 
 @Entity
 @Getter
-@Table(name = "Category")
+@Table(name = "category")
 public class Category {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long categoryId;
 
-    @Column(nullable = false, length = 50)
-    private String categoryThema;
-
-    @Column(length = 50)
+    @Column(length = 50, nullable = false, unique = true)
     private String categoryName;
-
-    @Column(columnDefinition = "TEXT")
-    private String categoryNumber;
-
-    @Column(nullable = false)
-    private Integer displayOrder;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;

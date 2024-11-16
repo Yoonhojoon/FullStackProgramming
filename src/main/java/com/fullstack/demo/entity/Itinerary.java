@@ -7,13 +7,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-// Itinerary.java
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "itinerary")
 public class Itinerary extends BaseTimeEntity {
 
     @Id
@@ -24,19 +26,35 @@ public class Itinerary extends BaseTimeEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column
+    @Column(nullable = false, length = 100)
+    private String title;  // 일정 제목
+
+    @Column(length = 255)
+    private String description;  // 일정 설명
+
+    @Column(nullable = false)
     private LocalDate startDate;
 
-    @Column
+    @Column(nullable = false)
     private LocalDate endDate;
 
     @OneToMany(mappedBy = "itinerary")
     private List<DailyPlan> dailyPlans = new ArrayList<>();
 
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
+
     @Builder
-    public Itinerary(User user, LocalDate startDate, LocalDate endDate) {
+    public Itinerary(User user, String title, String description, LocalDate startDate, LocalDate endDate) {
         this.user = user;
+        this.title = title;
+        this.description = description;
         this.startDate = startDate;
         this.endDate = endDate;
+        this.createdAt = getCreatedAt();
+        this.updatedAt = getUpdatedAt();
     }
 }

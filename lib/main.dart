@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:mytour/page/naver_map_screen.dart';
+import 'package:mytour/page/google_map_screen.dart';
 import 'package:mytour/page/login_page.dart';
 import 'package:mytour/page/splash_screen.dart';
 

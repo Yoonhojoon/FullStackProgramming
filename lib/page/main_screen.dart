@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'naver_map_screen.dart';
+import 'google_map_screen.dart';
 import 'home_screen.dart';
 
 class MainScreen extends StatefulWidget {
@@ -15,7 +15,7 @@ class _MainScreenState extends State<MainScreen> {
   // 각 탭에 표시할 화면 목록
   final List<Widget> _pages = [
     const HomeScreen(),
-    const NaverMapScreen(), // 네이버 맵 화면 추가
+    const GoogleMapScreen(), // 네이버 맵 화면 추가
     const ProfileScreen(),
   ];
 

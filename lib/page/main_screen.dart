@@ -15,7 +15,7 @@ class _MainScreenState extends State<MainScreen> {
   // 각 탭에 표시할 화면 목록
   final List<Widget> _pages = [
     const HomeScreen(),
-    const GoogleMapScreen(), // 네이버 맵 화면 추가
+     GoogleMapScreen(), // 네이버 맵 화면 추가
     const ProfileScreen(),
   ];
 

@@ -1,10 +1,7 @@
 package com.fullstack.demo.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -14,6 +11,7 @@ import java.util.List;
 // DailyPlan.java
 @Entity
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class DailyPlan {
     @Id
@@ -52,4 +50,14 @@ public class DailyPlan {
     void setItinerary(Itinerary itinerary) {
         this.itinerary = itinerary;
     }
+
+    public void updateTotalDistance(Double totalDistance) {
+        this.totalDistance = totalDistance;
+    }
+
+    public void updateTotalTravelTime(Integer totalTravelTime) {
+        this.totalTravelTime = totalTravelTime;
+    }
+
+
 }

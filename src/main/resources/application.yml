@@ -1,4 +1,7 @@
 spring:
+  profiles:
+    active: local
+
   # H2 Setting Info (H2 Console에 접속하기 위한 설정정보 입력)
   h2:
     console:
@@ -23,3 +26,4 @@ spring:
     hibernate:
       ddl-auto: create-drop
     defer-datasource-initialization: true
+

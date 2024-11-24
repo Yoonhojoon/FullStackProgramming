@@ -47,14 +47,29 @@ public class Itinerary extends BaseTimeEntity {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
     @Builder
-    public Itinerary(User user, String title, String description, LocalDate startDate, LocalDate endDate) {
+    public Itinerary(User user, String title, String description,
+                     LocalDate startDate, LocalDate endDate) {
         this.user = user;
         this.title = title;
         this.description = description;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.createdAt = getCreatedAt();
-        this.updatedAt = getUpdatedAt();
+    }
+
+    public void addDailyPlan(DailyPlan dailyPlan) {
+        this.dailyPlans.add(dailyPlan);
+        dailyPlan.setItinerary(this);
     }
 }

@@ -1,10 +1,7 @@
 package com.fullstack.demo.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -37,10 +34,13 @@ public class User extends BaseTimeEntity {
     private final List<Itinerary> itineraries = new ArrayList<>();
 
     @Builder
-    public User(String username, String googleId, String email, UserRole role) {
+    public User (String username, String googleId, String email, UserRole role) {
         this.username = username;
         this.googleId = googleId;
         this.email = email;
         this.role = role != null ? role : UserRole.USER; // 기본값으로 USER 역할 부여
+
     }
+
+
 }

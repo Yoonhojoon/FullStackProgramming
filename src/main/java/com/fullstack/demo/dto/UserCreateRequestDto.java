@@ -41,4 +41,5 @@ public class UserCreateRequestDto {
                 .email(this.email)
                 .build();
     }
+
 }

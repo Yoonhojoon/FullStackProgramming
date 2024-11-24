@@ -12,12 +12,14 @@ INSERT INTO users (
       ('박여행', 'google_789123456', 'park.travel@gmail.com', 'USER', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
       ('정모험', 'google_321654987', 'jung.adventure@gmail.com', 'USER', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
--- Board 테이블 데이터 (Board 엔티티의 구조에 따라 수정이 필요할 수 있습니다)
+
+-- Board 테이블 데이터
 INSERT INTO board (board_name, created_at, updated_at)
 VALUES
     ('여행 후기',  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('여행 계획',  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('추천 여행지', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
 
 -- Category 테이블 데이터
 INSERT INTO category (category_name, created_at, updated_at)
@@ -28,6 +30,7 @@ VALUES
     ('자연여행', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('맛집투어', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('문화탐방', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
 
 -- Post 테이블 데이터
 INSERT INTO post (
@@ -96,3 +99,6 @@ INSERT INTO itinerary (
       ('제주도 여행 계획', '제주도 3박 4일 여행 일정', '2024-04-01', '2024-04-04', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
       ('방콕 여행 계획', '방콕 5박 6일 여행 일정', '2024-05-01', '2024-05-06', 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
       ('부산 여행 계획', '부산 2박 3일 여행 일정', '2024-06-01', '2024-06-03', 3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+
+

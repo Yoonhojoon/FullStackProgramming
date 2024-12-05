@@ -1,23 +1,25 @@
 package com.fullstack.demo.entity;
 
+import com.fullstack.demo.entity.DailyPlan;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import com.fullstack.demo.entity.DestinationType;
 
 // Destination.java
 @Entity
 @Getter
+@Setter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Destination {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long destinationId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "daily_plan_id", nullable = false)
-    private DailyPlan dailyPlan;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private DestinationType type;
 
     @Column(nullable = false)
     private String name;
@@ -26,35 +28,65 @@ public class Destination {
     private String address;
 
     @Column(nullable = false)
-    private Double latitude;
+    private double latitude;
 
     @Column(nullable = false)
-    private Double longitude;
+    private double longitude;
 
-    @Column(nullable = false)
     private Integer orderInDay;
+    private Double distanceToNext;
+    private Integer timeToNext;
 
-    @Column
-    private Double distanceToNext;  // km 단위
-
-    @Column
-    private Integer timeToNext;  // 다음 장소까지 이동 시간(분)
+    @ManyToOne
+    @JoinColumn(name = "daily_plan_id")
+    private DailyPlan dailyPlan;
 
     @Builder
-    public Destination(DailyPlan dailyPlan, String name, String address,
-                       Double latitude, Double longitude, Integer orderInDay,
-                       Double distanceToNext, Integer timeToNext) {
-        this.dailyPlan = dailyPlan;
+    public Destination(String name, String address, Double latitude, Double longitude, DestinationType type) {
         this.name = name;
         this.address = address;
         this.latitude = latitude;
         this.longitude = longitude;
-        this.orderInDay = orderInDay;
+        this.type = type;
+    }
+
+    private void setName(String name) {
+        this.name = name;
+    }
+
+    private void setAddress(String address) {
+        this.address = address;
+    }
+
+    private void setLatitude(double latitude) {
+        this.latitude = latitude;
+    }
+
+    private void setLongitude(double longitude) {
+        this.longitude = longitude;
+    }
+
+    private void setType(DestinationType type) {
+        this.type = type;
+    }
+
+    public void setDailyPlan(DailyPlan dailyPlan) {
+        this.dailyPlan = dailyPlan;
+    }
+
+    public void updateOrderAndDistanceInfo(Integer order, Double distanceToNext, Integer timeToNext) {
+        this.orderInDay = order;
         this.distanceToNext = distanceToNext;
         this.timeToNext = timeToNext;
     }
 
-    void setDailyPlan(DailyPlan dailyPlan) {
-        this.dailyPlan = dailyPlan;
+    public static Destination createDestination(String name, String address, double latitude, double longitude, DestinationType type) {
+        Destination destination = new Destination();
+        destination.setName(name);
+        destination.setAddress(address);
+        destination.setLatitude(latitude);
+        destination.setLongitude(longitude);
+        destination.setType(type);
+        return destination;
     }
 }

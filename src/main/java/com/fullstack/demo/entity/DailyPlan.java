@@ -12,7 +12,7 @@ import java.util.List;
 @Entity
 @Getter
 @Setter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
 public class DailyPlan {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

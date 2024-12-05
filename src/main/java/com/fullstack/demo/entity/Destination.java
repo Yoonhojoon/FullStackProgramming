@@ -1,7 +1,9 @@
 package com.fullstack.demo.entity;
 
+import com.fullstack.demo.entity.DailyPlan;
 import jakarta.persistence.*;
 import lombok.*;
+import com.fullstack.demo.entity.DestinationType;
 
 // Destination.java
 @Entity
@@ -15,6 +17,10 @@ public class Destination {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long destinationId;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private DestinationType type;
+
     @Column(nullable = false)
     private String name;
 
@@ -27,30 +33,46 @@ public class Destination {
     @Column(nullable = false)
     private double longitude;
 
-    // orderInDay는 일정이 생성된 후에 설정되므로 nullable 허용
     private Integer orderInDay;
-
-    // 다음 목적지까지의 거리와 시간도 마지막 목적지는 null이므로 nullable 허용
     private Double distanceToNext;
     private Integer timeToNext;
 
     @ManyToOne
     @JoinColumn(name = "daily_plan_id")
-    // DailyPlan은 목적지가 처음 생성될 때는 없을 수 있으므로 nullable 허용
     private DailyPlan dailyPlan;
+
     @Builder
-    public Destination(String name, String address,
-                       Double latitude, Double longitude) {
+    public Destination(String name, String address, Double latitude, Double longitude, DestinationType type) {
         this.name = name;
         this.address = address;
         this.latitude = latitude;
         this.longitude = longitude;
+        this.type = type;
     }
 
-    void setDailyPlan(DailyPlan dailyPlan) {
+    private void setName(String name) {
+        this.name = name;
+    }
+
+    private void setAddress(String address) {
+        this.address = address;
+    }
+
+    private void setLatitude(double latitude) {
+        this.latitude = latitude;
+    }
+
+    private void setLongitude(double longitude) {
+        this.longitude = longitude;
+    }
+
+    private void setType(DestinationType type) {
+        this.type = type;
+    }
+
+    public void setDailyPlan(DailyPlan dailyPlan) {
         this.dailyPlan = dailyPlan;
     }
-
 
     public void updateOrderAndDistanceInfo(Integer order, Double distanceToNext, Integer timeToNext) {
         this.orderInDay = order;
@@ -58,14 +80,13 @@ public class Destination {
         this.timeToNext = timeToNext;
     }
 
-    // 정적 팩토리 메서드
-    public static Destination createDestination(String name, String address, double latitude, double longitude) {
+    public static Destination createDestination(String name, String address, double latitude, double longitude, DestinationType type) {
         Destination destination = new Destination();
         destination.setName(name);
         destination.setAddress(address);
         destination.setLatitude(latitude);
         destination.setLongitude(longitude);
+        destination.setType(type);
         return destination;
     }
-
 }

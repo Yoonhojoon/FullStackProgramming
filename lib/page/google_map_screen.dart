@@ -1,21 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:geocoding/geocoding.dart';
 import 'package:google_place/google_place.dart';
+import 'package:provider/provider.dart';
+import 'package:mytour/place_provider.dart';  // PlaceProvider import
 
-import '../service/api_service.dart';
-
-// 구글 맵 스크린
 class GoogleMapScreen extends StatefulWidget {
   @override
   _GoogleMapScreenState createState() => _GoogleMapScreenState();
 }
 
 class _GoogleMapScreenState extends State<GoogleMapScreen> {
-  final ApiService _apiService = ApiService();
   GoogleMapController? mapController;
   final TextEditingController _addressController = TextEditingController();
-  String _selectedAddress = '';
   Set<Marker> _markers = {};
 
   final googlePlace = GooglePlace("AIzaSyB7eNjy6eGdGPYh1CEtq9mX8-jJZQoheDk");
@@ -35,8 +31,8 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
             final marker = Marker(
               markerId: MarkerId(place.placeId ?? DateTime.now().toString()),
               position: LatLng(
-                  place.geometry!.location!.lat!,
-                  place.geometry!.location!.lng!
+                place.geometry!.location!.lat!,
+                place.geometry!.location!.lng!,
               ),
               infoWindow: InfoWindow(
                 title: place.name,
@@ -48,16 +44,16 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
             setState(() {
               _markers.add(marker);
             });
-          }
-        }
 
-        if (result.results!.first.geometry?.location?.lat != null &&
-            result.results!.first.geometry?.location?.lng != null) {
-          final position = LatLng(
-              result.results!.first.geometry!.location!.lat!,
-              result.results!.first.geometry!.location!.lng!
-          );
-          mapController?.animateCamera(CameraUpdate.newLatLngZoom(position, 15));
+            // 카메라를 해당 위치로 이동
+            if (mapController != null && place.geometry?.location?.lat != null && place.geometry?.location?.lng != null) {
+              final position = LatLng(
+                  place.geometry!.location!.lat!,
+                  place.geometry!.location!.lng!
+              );
+              mapController?.animateCamera(CameraUpdate.newLatLngZoom(position, 15));
+            }
+          }
         }
       }
     } catch (e) {
@@ -71,49 +67,89 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
     showModalBottomSheet(
       context: context,
       builder: (context) {
-        return Container(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                  place.name ?? '이름 없음',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)
-              ),
-              SizedBox(height: 8),
-              Text(place.formattedAddress ?? '주소 없음'),
-              SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () async {
-                  // 장소 데이터 준비
-                  final placeData = {
-                    'name': place.name,
-                    'address': place.formattedAddress,
-                    'latitude': place.geometry?.location?.lat,
-                    'longitude': place.geometry?.location?.lng,
-                    'placeId': place.placeId,
-                    // 필요한 경우 추가 데이터
-                  };
+        String _selectedType = '숙박'; // 기본값 설정
 
-                  // API를 통해 서버에 장소 추가
-                  final success = await _apiService.addPlace(placeData);
-
-                  if (!context.mounted) return;
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                          success ? '여행 리스트에 추가되었습니다!' : '추가에 실패했습니다. 다시 시도해주세요.'
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setModalState) {
+            return Container(
+              padding: EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    place.name ?? '이름 없음',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 8),
+                  Text(place.formattedAddress ?? '주소 없음'),
+                  SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: RadioListTile<String>(
+                          title: Text('숙박'),
+                          value: 'ACCOMMODATION',
+                          groupValue: _selectedType,
+                          onChanged: (value) {
+                            if (value != null) {
+                              setModalState(() {
+                                _selectedType = value;
+                              });
+                            }
+                          },
+                        ),
                       ),
-                    ),
-                  );
+                      Expanded(
+                        child: RadioListTile<String>(
+                          title: Text('장소'),
+                          value: 'SPOT',
+                          groupValue: _selectedType,
+                          onChanged: (value) {
+                            if (value != null) {
+                              setModalState(() {
+                                _selectedType = value;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      // Destination 데이터를 위한 placeData 생성
+                      final placeData = {
+                        'name': place.name,
+                        'address': place.formattedAddress,
+                        'latitude': place.geometry?.location?.lat,
+                        'longitude': place.geometry?.location?.lng,
+                        'type': _selectedType.toUpperCase(), // 숙박/장소 값 전달
+                        'transitDetails': null,
+                        'lastTransitDetails': null,
+                        'drivingDetails': null,
+                        'lastDrivingDetails': null,
+                        'orderInDay': null,
+                        'distanceToNext': null,
+                        'timeToNext': null,
+                      };
 
-                  Navigator.pop(context);
-                },
-                child: Text('여행 리스트에 추가'),
+                      // PlaceProvider를 통해 places에 추가
+                      final placeProvider = Provider.of<PlaceProvider>(context, listen: false);
+                      placeProvider.addPlace(placeData);
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('여행 리스트에 추가되었습니다!')),
+                      );
+
+                      Navigator.pop(context);
+                    },
+                    child: Text('여행 리스트에 추가'),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );

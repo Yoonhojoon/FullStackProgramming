@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'travel_category.dart';
+import 'category/travel_category.dart';
 import 'popular_travel.dart';
 
 class HomeScreen extends StatelessWidget {

@@ -1,11 +1,12 @@
 package com.fullstack.demo.service;
 
-import org.springframework.beans.factory.annotation.Value;
 import com.google.maps.DirectionsApi;
 import com.google.maps.GeoApiContext;
 import com.google.maps.model.DirectionsResult;
 import com.google.maps.model.TravelMode;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import jakarta.annotation.PreDestroy;
 
 @Service
 public class GoogleMapsService {
@@ -18,11 +19,30 @@ public class GoogleMapsService {
                 .build();
     }
 
-    public DirectionsResult getDirections(String origin, String destination) throws Exception {
+    public DirectionsResult getOptimizedRoute(String origin, String destination,
+                                              String[] waypoints, TravelMode travelMode) throws Exception {
         return DirectionsApi.newRequest(context)
-                .mode(TravelMode.DRIVING) // 운전 모드, 필요에 따라 변경 가능
+                .mode(travelMode)
+                .origin(origin)
+                .destination(destination)
+                .waypoints(waypoints)
+                .optimizeWaypoints(true)  // optimize -> optimizeWaypoints로 수정
+                .await();
+    }
+
+    public DirectionsResult getDirections(String origin, String destination,
+                                          TravelMode travelMode) throws Exception {
+        return DirectionsApi.newRequest(context)
+                .mode(travelMode)
                 .origin(origin)
                 .destination(destination)
                 .await();
+    }
+
+    @PreDestroy
+    public void closeContext() {
+        if (context != null) {
+            context.shutdown();
+        }
     }
 }

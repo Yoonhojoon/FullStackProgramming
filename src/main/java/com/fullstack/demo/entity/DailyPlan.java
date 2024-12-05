@@ -16,48 +16,24 @@ import java.util.List;
 public class DailyPlan {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long dailyPlanId;
+    private Long id;
+
+    private Integer dayNumber;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "itinerary_id", nullable = false)
     private Itinerary itinerary;
 
+    @OneToOne
+    @JoinColumn(name = "accommodation_id")
+    private Destination accommodation;
+
     @OneToMany(mappedBy = "dailyPlan", cascade = CascadeType.ALL)
     private List<Destination> destinations = new ArrayList<>();
 
-    @Column(nullable = false)
-    private Integer dayNumber;
+    // 하루 전체 이동 거리
+    private Double totalDistance;
 
-    @Column
-    private Double totalDistance;  // 일일 총 이동 거리
-
-    @Column
-    private Integer totalTravelTime;  // 일일 총 이동 시간(분)
-
-    @Builder
-    public DailyPlan(Itinerary itinerary, Integer dayNumber, Double totalDistance, Integer totalTravelTime) {
-        this.itinerary = itinerary;
-        this.dayNumber = dayNumber;
-        this.totalDistance = totalDistance;
-        this.totalTravelTime = totalTravelTime;
-    }
-
-    public void addDestination(Destination destination) {
-        this.destinations.add(destination);
-        destination.setDailyPlan(this);
-    }
-
-    void setItinerary(Itinerary itinerary) {
-        this.itinerary = itinerary;
-    }
-
-    public void updateTotalDistance(Double totalDistance) {
-        this.totalDistance = totalDistance;
-    }
-
-    public void updateTotalTravelTime(Integer totalTravelTime) {
-        this.totalTravelTime = totalTravelTime;
-    }
-
-
+    // 하루 전체 이동 시간 (분)
+    private Integer totalTravelTime;
 }

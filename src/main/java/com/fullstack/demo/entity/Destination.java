@@ -11,7 +11,7 @@ import com.fullstack.demo.entity.DestinationType;
 @Setter
 @Builder
 @AllArgsConstructor
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
 public class Destination {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,6 +32,18 @@ public class Destination {
 
     @Column(nullable = false)
     private double longitude;
+
+    @Column(length = 1000)
+    private String transitDetails;  // 대중교통 이용시 이 장소로 오는 경로
+
+    @Column(length = 1000)
+    private String lastTransitDetails;  // 대중교통 이용시 이 장소에서 숙소로 가는 경로
+
+    @Column(length = 1000)
+    private String drivingDetails;  // 자동차 이용시 이 장소로 오는 경로
+
+    @Column(length = 1000)
+    private String lastDrivingDetails;  // 자동차 이용시 이 장소에서 숙소로 가는 경로
 
     private Integer orderInDay;
     private Double distanceToNext;

@@ -287,11 +287,12 @@ public class TripPlanningService {
                                         List<Destination> spots,
                                         TravelMode travelMode) {
         List<DailyPlan> dailyPlans = new ArrayList<>();
-        for (int day = 1; day <= accommodationsByDay.size(); day++) {
+        for (int day = 0; day < accommodationsByDay.size(); day++) {
             DailyPlan dailyPlan = new DailyPlan();
-            dailyPlan.setDayNumber(day);
+            dailyPlan.setDayNumber(day + 1);  // 표시용 날짜는 1부터 시작
             dailyPlan.setItinerary(itinerary);
-            dailyPlan.setAccommodation(accommodationsByDay.get(day));
+            dailyPlan.setAccommodation(accommodationsByDay.get(day + 1));
+            dailyPlan.setDestinations(new ArrayList<>()); // 이 부분 추가
             dailyPlans.add(dailyPlan);
         }
 

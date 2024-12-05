@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_place/google_place.dart';
+import 'package:mytour/destination_provider.dart';
+import 'package:mytour/service/api_service.dart';
 import 'package:provider/provider.dart';
-import 'package:mytour/place_provider.dart';  // PlaceProvider import
+import 'package:mytour/destination_provider.dart';  // PlaceProvider import
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class GoogleMapScreen extends StatefulWidget {
   @override
@@ -10,11 +13,12 @@ class GoogleMapScreen extends StatefulWidget {
 }
 
 class _GoogleMapScreenState extends State<GoogleMapScreen> {
+  final apiService = ApiService();
   GoogleMapController? mapController;
   final TextEditingController _addressController = TextEditingController();
   Set<Marker> _markers = {};
 
-  final googlePlace = GooglePlace("AIzaSyB7eNjy6eGdGPYh1CEtq9mX8-jJZQoheDk");
+  final googlePlace = GooglePlace(dotenv.env['GOOGLE_MAP_API']!);
 
   Future<void> _searchAddress() async {
     try {
@@ -117,7 +121,7 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
                   ),
                   SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       // Destination 데이터를 위한 placeData 생성
                       final placeData = {
                         'name': place.name,
@@ -134,9 +138,10 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
                         'timeToNext': null,
                       };
 
-                      // PlaceProvider를 통해 places에 추가
-                      final placeProvider = Provider.of<PlaceProvider>(context, listen: false);
-                      placeProvider.addPlace(placeData);
+                      final success = await apiService.addDestination(placeData);
+                      // DestinationProvider를 통해 destination에 추가
+                      final placeProvider = Provider.of<DestinationProvider>(context, listen: false);
+                      placeProvider.addDestination(placeData);
 
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('여행 리스트에 추가되었습니다!')),

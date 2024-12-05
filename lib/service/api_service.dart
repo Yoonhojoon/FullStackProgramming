@@ -18,12 +18,12 @@ class ApiService {
   );
 
   // 장소 추가하기
-  Future<bool> addPlace(Map<String, dynamic> place) async {
+  Future<bool> addDestination(Map<String, dynamic> destination) async {
     try {
-      final response = await _dio.post("/places", data: place);
+      final response = await _dio.post("/destination", data: destination);
       return response.statusCode == 200 || response.statusCode == 201;
     } catch (e) {
-      print("Error adding place: $e");
+      print("Error adding destination: $e");
       return false;
     }
   }

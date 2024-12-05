@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mytour/page/splash_screen.dart';
-import 'package:mytour/model/place_data.dart';  // PlaceData 클래스를 임포트
+import 'package:mytour/model/destination_data.dart';  // PlaceData 클래스를 임포트
 import 'package:provider/provider.dart';
-import 'place_provider.dart';
+import 'destination_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,7 +16,7 @@ void main() async {
         print("********* 네이버맵 인증오류 : $ex *********");
       });
   runApp(        ChangeNotifierProvider(
-    create: (_) => PlaceProvider(),
+    create: (_) => DestinationProvider(),
     child: MyApp(),
   ),
   );

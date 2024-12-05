@@ -43,6 +43,7 @@ dependencies:
   geocoding: ^3.0.0
   google_place: ^0.4.7
   provider: ^6.0.1
+  calendar_date_picker2: ^0.5.3
 
 dev_dependencies:
   flutter_test:

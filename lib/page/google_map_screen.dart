@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:google_place/google_place.dart';
-
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../service/api_service.dart';
 
 // 구글 맵 스크린
@@ -18,7 +18,7 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
   String _selectedAddress = '';
   Set<Marker> _markers = {};
 
-  final googlePlace = GooglePlace("AIzaSyB7eNjy6eGdGPYh1CEtq9mX8-jJZQoheDk");
+  final googlePlace = GooglePlace(dotenv.env['GOOGLE_MAP_API']!);
 
   Future<void> _searchAddress() async {
     try {

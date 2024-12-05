@@ -128,7 +128,7 @@ class LoginButton extends StatelessWidget {
     this.icon,
     this.onPressed,
     super.key,
-  });
+});
 
   @override
   Widget build(BuildContext context) {

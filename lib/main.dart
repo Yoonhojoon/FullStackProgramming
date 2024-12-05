@@ -7,7 +7,7 @@ import 'package:mytour/page/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
+  await dotenv.load(fileName: 'assets/config/.env');
   String clientId = dotenv.get("CLIENT_ID");
   await NaverMapSdk.instance.initialize(
       clientId: clientId,

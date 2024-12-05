@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mytour/page/plan/scheduling_page.dart';
 import 'google_map_screen.dart';
 import 'home_screen.dart';
 
@@ -17,6 +18,7 @@ class _MainScreenState extends State<MainScreen> {
     const HomeScreen(),
      GoogleMapScreen(), // 네이버 맵 화면 추가
     const ProfileScreen(),
+    SchedulingPage(),
   ];
 
   @override

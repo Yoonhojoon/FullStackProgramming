@@ -276,7 +276,21 @@ public class TripPlanningService {
             }
         }
 
+
+        // 적절한 Plan이 없으면 기본 Plan 생성
+        if (bestPlan == null) {
+            bestPlan = createDefaultPlan(spot);
+        }
+
         return bestPlan;
+    }
+
+
+    private DailyPlan createDefaultPlan(Destination spot) {
+        DailyPlan defaultPlan = new DailyPlan();
+        defaultPlan.setDestinations(new ArrayList<>());
+        // 필요한 초기 설정 추가
+        return defaultPlan;
     }
 
     private boolean canAddSpotToPlan(DailyPlan plan, Destination spot) {

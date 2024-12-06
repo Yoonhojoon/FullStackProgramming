@@ -172,11 +172,15 @@ public class TripPlanningServiceTest {
     private DirectionsResult createMockDirectionsResult(TravelMode mode) {
         DirectionsResult result = new DirectionsResult();
         DirectionsRoute route = new DirectionsRoute();
-        DirectionsLeg[] legs = new DirectionsLeg[3];
+
+        // 각 목적지 사이의 경로 + 마지막 목적지에서 숙소까지의 경로
+        int numLegs = mockSpots.size() + 1;
+        DirectionsLeg[] legs = new DirectionsLeg[numLegs];
 
         for (int i = 0; i < legs.length; i++) {
             legs[i] = new DirectionsLeg();
-            legs[i].steps = new DirectionsStep[2]; // 각 구간에 2개의 단계 추가
+            legs[i].steps = new DirectionsStep[2];
+
 
             if (mode == TravelMode.DRIVING) {
                 // 운전 경로 정보
@@ -214,7 +218,7 @@ public class TripPlanningServiceTest {
         }
 
         route.legs = legs;
-        route.waypointOrder = new int[]{0, 1};
+        route.waypointOrder = new int[]{0}; // spots 크기와 맞게 수정
         result.routes = new DirectionsRoute[]{route};
 
         return result;

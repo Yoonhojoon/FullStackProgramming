@@ -43,6 +43,7 @@ dependencies:
   geocoding: ^3.0.0
   google_place: ^0.4.7
   provider: ^6.0.1
+  calendar_date_picker2: ^0.5.3
 
 dev_dependencies:
   flutter_test:
@@ -67,9 +68,9 @@ flutter:
   uses-material-design: true
 
   assets:
-    -  .env
     -  assets/images/icon.png
-    -  assets/images/namwon.png
+    -  assets/images/namwon.jpg
+    -  assets/config/.env
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

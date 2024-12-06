@@ -10,21 +10,18 @@ class ApiService {
       baseUrl: "http://10.0.2.2:8080/api",
       connectTimeout: Duration(seconds: 5),
       receiveTimeout: Duration(seconds: 5),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      }
     ),
   );
 
   // 장소 추가하기
-  Future<bool> addDestination(Map<String, dynamic> placeData) async {
+  Future<bool> addDestination(Map<String, dynamic> destination) async {
     try {
-      final response = await _dio.post("/destinations" ,data: placeData);
-
-      // HTTP 상태 코드가 201이면 성공
-      if (response.statusCode == 201) {
-        return true;
-      } else {
-        print('Failed to add destination: ${response.data}');
-        return false;
-      }
+      final response = await _dio.post("/destination", data: destination);
+      return response.statusCode == 200 || response.statusCode == 201;
     } catch (e) {
       print("Error adding destination: $e");
       return false;

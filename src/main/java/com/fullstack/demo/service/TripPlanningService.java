@@ -1,22 +1,24 @@
 package com.fullstack.demo.service;
 
-import com.fullstack.demo.entity.DailyPlan;
-import com.fullstack.demo.entity.Destination;
-import com.fullstack.demo.entity.DestinationType;
-import com.fullstack.demo.entity.Itinerary;
+import com.fullstack.demo.entity.*;
+import com.fullstack.demo.repository.ItineraryRepository;
 import com.google.maps.model.*;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class TripPlanningService {
     private final GoogleMapsService googleMapsService;
+    private final ItineraryRepository itineraryRepository; // 추가
 
-    public TripPlanningService(GoogleMapsService googleMapsService) {
+    public TripPlanningService(GoogleMapsService googleMapsService, ItineraryRepository itineraryRepository) {
         this.googleMapsService = googleMapsService;
+        this.itineraryRepository = itineraryRepository;
     }
+
 
     private void optimizeDailyRoute(DailyPlan dailyPlan, DailyPlan previousDayPlan, TravelMode travelMode) {
         List<Destination> spots = dailyPlan.getDestinations().stream()
@@ -306,4 +308,32 @@ public class TripPlanningService {
 
         return dailyPlans;
     }
+
+    // 최적화된 일정을 저장하는 메서드
+    public Itinerary saveOptimizedItinerary(
+            User user,
+            String title,
+            String description,
+            LocalDate startDate,
+            LocalDate endDate,
+            List<DailyPlan> optimizedPlans
+    ) {
+        // 새로운 Itinerary 생성
+        Itinerary itinerary = Itinerary.builder()
+                .user(user)
+                .title(title)
+                .description(description)
+                .startDate(startDate)
+                .endDate(endDate)
+                .build();
+
+        // 최적화된 DailyPlan들을 Itinerary에 연결
+        for (DailyPlan dailyPlan : optimizedPlans) {
+            itinerary.addDailyPlan(dailyPlan);
+        }
+
+        // 저장 및 반환
+        return itineraryRepository.save(itinerary);
+    }
+
 }

@@ -62,25 +62,6 @@ public class Destination {
         this.type = type;
     }
 
-    private void setName(String name) {
-        this.name = name;
-    }
-
-    private void setAddress(String address) {
-        this.address = address;
-    }
-
-    private void setLatitude(double latitude) {
-        this.latitude = latitude;
-    }
-
-    private void setLongitude(double longitude) {
-        this.longitude = longitude;
-    }
-
-    private void setType(DestinationType type) {
-        this.type = type;
-    }
 
     public void setDailyPlan(DailyPlan dailyPlan) {
         this.dailyPlan = dailyPlan;

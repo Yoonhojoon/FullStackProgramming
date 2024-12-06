@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:mytour/page/plan/schedule_list_page.dart';
 import 'package:mytour/page/plan/scheduling_page.dart';
+import 'package:provider/provider.dart';
+import '../dailyplan_provider.dart';
+import '../entity/DailyPlan.dart';
 import 'google_map_screen.dart';
 import 'home_screen.dart';
 
@@ -16,9 +20,11 @@ class _MainScreenState extends State<MainScreen> {
   // 각 탭에 표시할 화면 목록
   final List<Widget> _pages = [
     const HomeScreen(),
-     GoogleMapScreen(), // 네이버 맵 화면 추가
-    const ProfileScreen(),
-    SchedulingPage(),
+    GoogleMapScreen(),
+    Consumer<DailyPlanProvider>(
+      builder: (context, provider, child) => ScheduleListPage(dailyPlans: provider.plans),
+    ),
+    SchedulingPage(onPlansCreated: (List<DailyPlan> plans) {  },),
   ];
 
   @override

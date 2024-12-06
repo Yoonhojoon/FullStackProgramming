@@ -3,6 +3,9 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_place/google_place.dart';
 import 'package:dio/dio.dart';
 
+import '../entity/DailyPlan.dart';
+import '../entity/Destination.dart';
+
 // API 서비스 클래스
 class ApiService {
   final Dio _dio = Dio(
@@ -64,4 +67,31 @@ class ApiService {
       print("Error deleting post: $e");
     }
   }
+
+  Future<List<DailyPlan>> optimizeTrip({
+    required Map<int, Destination> accommodations,
+    required List<Destination> spots,
+    String travelMode = 'DRIVING',
+  }) async {
+    try {
+      // Spring 컨트롤러 요청 형식에 맞게 데이터 변환
+      final requestData = {
+        'accommodationsByDay': accommodations.map(
+                (key, value) => MapEntry(key.toString(), value.toJson())
+        ),
+        'spots': spots.map((spot) => spot.toJson()).toList(),
+        'travelMode': travelMode,
+      };
+
+      final response = await _dio.post('/trips/optimize', data: requestData);
+
+      return (response.data as List)
+          .map((x) => DailyPlan.fromJson(x))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to optimize trip: ${e.toString()}');
+    }
+  }
 }
+
+

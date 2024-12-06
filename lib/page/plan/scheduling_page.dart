@@ -1,9 +1,20 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:calendar_date_picker2/calendar_date_picker2.dart';
+import 'package:mytour/page/plan/schedule_list_page.dart';
+import 'package:mytour/service/api_service.dart';
 import 'package:provider/provider.dart';
 import 'package:mytour/destination_provider.dart';
+import 'package:http/http.dart' as http;
+
+import '../../entity/DailyPlan.dart';
+import '../../entity/Destination.dart';
 
 class SchedulingPage extends StatefulWidget {
+  final Function(List<DailyPlan> plans) onPlansCreated;
+
+  const SchedulingPage({Key? key, required this.onPlansCreated}) : super(key: key);
   @override
   _SchedulingPageState createState() => _SchedulingPageState();
 }
@@ -12,6 +23,8 @@ class _SchedulingPageState extends State<SchedulingPage> {
   List<DateTime?> _selectedDates = [];
   bool _isExpanded = true;
   Map<int, Map<String, dynamic>> _selectedAccommodations = {};
+  String _selectedTravelMode = 'DRIVING';
+  final apiService = ApiService();
 
   List<Map<String, dynamic>> _getAccommodations(DestinationProvider provider) {
     return provider.destinations
@@ -51,6 +64,33 @@ class _SchedulingPageState extends State<SchedulingPage> {
       ),
     );
   }
+
+  Widget _buildTravelModeSelector() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          Expanded(
+            child: RadioListTile<String>(
+              title: Text('자동차'),
+              value: 'DRIVING',
+              groupValue: _selectedTravelMode,
+              onChanged: (value) => setState(() => _selectedTravelMode = value!),
+            ),
+          ),
+          Expanded(
+            child: RadioListTile<String>(
+              title: Text('대중교통'),
+              value: 'TRANSIT',
+              groupValue: _selectedTravelMode,
+              onChanged: (value) => setState(() => _selectedTravelMode = value!),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   Widget _buildAccommodationSelection(BuildContext context) {
     if (_selectedDates.isEmpty) return SizedBox();
@@ -208,6 +248,7 @@ class _SchedulingPageState extends State<SchedulingPage> {
                       });
                     },
                   ),
+                  _buildTravelModeSelector(),
                   _buildAccommodationSelection(context),
                 ],
               ),
@@ -237,8 +278,39 @@ class _SchedulingPageState extends State<SchedulingPage> {
                 ),
                 SizedBox(height: 10),
                 ElevatedButton(
-                  onPressed: () {
-                    // 여행 계획 생성 로직
+                  onPressed: () async {
+                    try {
+                      final destinations = Provider.of<DestinationProvider>(context, listen: false)
+                          .destinations
+                          .where((d) => d['type'] != 'ACCOMMODATION')
+                          .map((d) => Destination.fromJson(d))
+                          .toList();
+
+                      final accommodationMap = Map.fromEntries(
+                          _selectedAccommodations.entries.map(
+                                  (e) => MapEntry(e.key, Destination.fromJson(e.value))
+                          )
+                      );
+
+                      print('Request data:');
+                      print('Destinations: ${destinations.map((d) => d.toJson()).toList()}');
+                      print('Accommodations: ${accommodationMap.map((k, v) => MapEntry(k, v.toJson()))}');
+                      print('Travel mode: $_selectedTravelMode');
+
+                      final plans = await apiService.optimizeTrip(
+                        accommodations: accommodationMap,
+                        spots: destinations,
+                        travelMode: _selectedTravelMode,
+                      );
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => ScheduleListPage(dailyPlans: plans)),
+                      );
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('여행 계획 생성 중 오류가 발생했습니다. ${e.toString()}')),
+                      );
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color(0xFFFF7800).withOpacity(0.6),

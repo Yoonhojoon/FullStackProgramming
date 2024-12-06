@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mytour/page/splash_screen.dart';
 import 'package:mytour/model/destination_data.dart';  // PlaceData 클래스를 임포트
 import 'package:provider/provider.dart';
+import 'dailyplan_provider.dart';
 import 'destination_provider.dart';
 
 void main() async {
@@ -14,13 +15,19 @@ void main() async {
       clientId: clientId,
       onAuthFailed: (ex) {
         print("********* 네이버맵 인증오류 : $ex *********");
-      });
-  runApp(        ChangeNotifierProvider(
-    create: (_) => DestinationProvider(),
-    child: MyApp(),
-  ),
+      }
+  );
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => DestinationProvider()),
+        ChangeNotifierProvider(create: (_) => DailyPlanProvider()),
+      ],
+      child: MyApp(),
+    ),
   );
 }
+
 class MyApp extends StatelessWidget {
   MyApp({super.key});
   final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();

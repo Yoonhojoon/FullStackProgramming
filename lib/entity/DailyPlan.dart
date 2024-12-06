@@ -4,7 +4,7 @@ import 'dart:ffi';
 import 'Destination.dart';
 
 class DailyPlan {
-  final Long id;
+  final int id;
   final int dayNumber;
   final Destination? accommodation;
   final List<Destination> destinations;

@@ -35,7 +35,11 @@ class Destination {
     return Destination(
       id: json['destinationId'] ?? 0,  // null이면 0으로 처리
       type: DestinationType.values.firstWhere(
-              (e) => e.toString() == 'DestinationType.${json['type']}'
+              (e) => e.name == json['type'],
+          orElse: () {
+            print('Unexpected type: ${json['type']}'); // 예상치 못한 타입 출력
+            return DestinationType.SPOT; // 기본값
+          }
       ),
       name: json['name'],
       address: json['address'],

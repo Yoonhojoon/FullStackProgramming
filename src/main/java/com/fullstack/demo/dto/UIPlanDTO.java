@@ -11,5 +11,4 @@ public class UIPlanDTO {
     private int day;
     private List<UITripItemDTO> items;
     private int totalDistance;     // Double -> int로 변경
-    private Integer totalTravelTime;
-}
+    private Integer totalTravelTime;}

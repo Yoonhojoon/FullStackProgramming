@@ -4,7 +4,7 @@ import com.fullstack.demo.dto.*;
 import com.fullstack.demo.dto.response.DirectionsResponse;
 import com.fullstack.demo.entity.*;
 import com.fullstack.demo.entity.naver.LatLng;
-import com.fullstack.demo.entity.naver.Leg;
+
 import com.fullstack.demo.entity.naver.OptimizedRoute;
 import com.fullstack.demo.repository.ItineraryRepository;
 import lombok.AllArgsConstructor;
@@ -287,34 +287,6 @@ public class TripPlanningService {
     }
 
 
-    private List<UITripItemDTO> convertDestinationsToItems(DailyPlan plan, List<DirectionsResponse.Route.Guide> guides) {
-        List<Destination> sortedDestinations = new ArrayList<>(plan.getDestinations());
-        sortedDestinations.sort(Comparator.comparing(Destination::getOrderInDay));
-
-        List<UITripItemDTO> items = new ArrayList<>();
-
-        for (int i = 0; i < sortedDestinations.size(); i++) {
-            Destination dest = sortedDestinations.get(i);
-            DirectionsResponse.Route.Guide guide = (i < guides.size()) ? guides.get(i) : null;
-
-            items.add(UITripItemDTO.builder()
-                    .name(dest.getName())
-                    .address(dest.getAddress())
-                    .type(dest.getType().toString())
-                    .color(determineColor(dest.getType()))
-                    .travelTimeMinutes(dest.getTimeToNext())
-                    .distanceToNext(dest.getDistanceToNext())
-                    .guide(guide != null ? GuideDTO.builder()
-                            .distance(guide.getDistance())
-                            .duration(guide.getDuration())
-                            .instructions(guide.getInstructions())
-                            .type(guide.getType())
-                            .build() : null)
-                    .build());
-        }
-
-        return items;
-    }
     private String determineColor(DestinationType type) {
         return switch (type) {
             case SPOT -> "#FFD700";     // 관광지

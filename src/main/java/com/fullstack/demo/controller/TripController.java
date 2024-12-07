@@ -4,6 +4,7 @@ package com.fullstack.demo.controller;
 import com.fullstack.demo.dto.*;
 
 import com.fullstack.demo.dto.request.OptimizeTripRequest;
+import com.fullstack.demo.dto.response.DailyScheduleResponse;
 import com.fullstack.demo.entity.*;
 import com.fullstack.demo.service.TripPlanningService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,12 +30,11 @@ public class TripController {
 
     @Operation(summary = "여행 일정 최적화")
     @PostMapping("/optimize")
-    public ResponseEntity<List<UITripItemDTO>> optimizeTrip(@RequestBody @Valid OptimizeTripRequest request) {
+    public ResponseEntity<List<DailyScheduleResponse>> optimizeTrip(@RequestBody @Valid OptimizeTripRequest request) {
         try {
             Map<Integer, Destination> accommodations = request.getAccommodationsByDay();
             List<Destination> spots = request.getSpots();
 
-            // 기본적인 유효성 검사
             if (accommodations == null || accommodations.isEmpty()) {
                 return ResponseEntity.badRequest().build();
             }
@@ -45,24 +45,24 @@ public class TripController {
                     spots
             );
 
-            List<UITripItemDTO> uiItems = new ArrayList<>();
-            optimizedPlans.forEach(plan ->
-                    uiItems.addAll(tripPlanningService.convertToUITripItems(plan))
-            );
+            List<DailyScheduleResponse> response = new ArrayList<>();
 
-            // 응답 로그 추가
-            log.info("Optimized trip response: {}", uiItems);
-            // 또는 더 자세한 로그를 위해
-            uiItems.forEach(item ->
-                    log.info("Item: name={}, type={}, guide={}",
-                            item.getName(),
-                            item.getType(),
-                            item.getGuide())
-            );
+            // 이전 날짜의 계획을 추적하면서 변환
+            DailyPlan previousPlan = null;
+            for (OptimizedDailyPlanDto plan : optimizedPlans) {
+                List<UITripItemDTO> items = tripPlanningService.convertToUITripItems(plan, previousPlan);
+                response.add(new DailyScheduleResponse(
+                        plan.getDailyPlan().getDayNumber(),
+                        items
+                ));
+                previousPlan = plan.getDailyPlan();
+            }
 
-            return ResponseEntity.ok(uiItems);
+            log.info("Optimized trip response by day: {}", response);
+
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            // 로깅 추가
+            log.error("Failed to optimize trip", e);
             return ResponseEntity.internalServerError().build();
         }
     }

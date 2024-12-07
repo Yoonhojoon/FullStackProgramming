@@ -35,26 +35,35 @@ public class TripPlanningService {
     }
 
     private List<GuideDTO> optimizeDailyRoute(DailyPlan dailyPlan, DailyPlan previousDayPlan) {
-        List<Destination> spots = dailyPlan.getDestinations().stream()
+        // 모든 경유지 포함 (시작점 + 관광지들)
+        List<Destination> allPoints = new ArrayList<>();
+
+        // 출발지 좌표 설정 (이전 날의 숙소 또는 당일 숙소)
+        LatLng originLatLng;
+        if (previousDayPlan != null) {
+            originLatLng = new LatLng(previousDayPlan.getAccommodation().getLatitude(),
+                    previousDayPlan.getAccommodation().getLongitude());
+            allPoints.add(previousDayPlan.getAccommodation());
+        } else {
+            originLatLng = new LatLng(dailyPlan.getAccommodation().getLatitude(),
+                    dailyPlan.getAccommodation().getLongitude());
+        }
+
+        // 관광지들 추가
+        allPoints.addAll(dailyPlan.getDestinations().stream()
                 .filter(d -> d.getType() == DestinationType.SPOT)
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
 
-        if (spots.isEmpty()) return new ArrayList<>();
+        if (allPoints.isEmpty()) return new ArrayList<>();
 
-        // 출발지 좌표
-        LatLng originLatLng = (previousDayPlan != null)
-                ? new LatLng(previousDayPlan.getAccommodation().getLatitude(),
-                previousDayPlan.getAccommodation().getLongitude())
-                : new LatLng(dailyPlan.getAccommodation().getLatitude(),
-                dailyPlan.getAccommodation().getLongitude());
-
-        // 도착지 좌표
+        // 도착지는 당일 숙소
         LatLng destinationLatLng = new LatLng(dailyPlan.getAccommodation().getLatitude(),
                 dailyPlan.getAccommodation().getLongitude());
 
-        // 경유지 좌표들
-        LatLng[] waypointLatLngs = spots.stream()
-                .map(spot -> new LatLng(spot.getLatitude(), spot.getLongitude()))
+        // 경유지 좌표들 (시작점이 있는 경우 첫번째 지점 제외)
+        LatLng[] waypointLatLngs = allPoints.stream()
+                .skip(previousDayPlan != null ? 1 : 0)  // 이전 날 숙소가 있을 때만 첫 지점 제외
+                .map(point -> new LatLng(point.getLatitude(), point.getLongitude()))
                 .toArray(LatLng[]::new);
 
         OptimizedRoute result = null;
@@ -67,8 +76,13 @@ public class TripPlanningService {
         List<Destination> optimizedSpots = new ArrayList<>();
         int[] waypointOrder = result.getWaypointOrder();
 
+        // waypoints 리스트 생성 (시작점 제외)
+        List<Destination> waypoints = allPoints.stream()
+                .skip(previousDayPlan != null ? 1 : 0)
+                .collect(Collectors.toList());
+
         for (int order : waypointOrder) {
-            optimizedSpots.add(spots.get(order));
+            optimizedSpots.add(waypoints.get(order));
         }
 
         dailyPlan.getDestinations().clear();
@@ -76,7 +90,6 @@ public class TripPlanningService {
 
         updateRouteDetails(dailyPlan, result);
 
-        // Guide 정보 추출 및 반환
         return result.getDirections().getRoute().getTrafast().stream()
                 .flatMap(trafast -> trafast.getGuide().stream())
                 .map(guide -> GuideDTO.builder()
@@ -187,26 +200,51 @@ public class TripPlanningService {
         // 하루 최대 방문 가능 관광지 수나 다른 제약 조건을 여기서 체크할 수 있습니다
         return true;
     }
-    public List<UITripItemDTO> convertToUITripItems(OptimizedDailyPlanDto optimizedPlan) {
+    public List<UITripItemDTO> convertToUITripItems(OptimizedDailyPlanDto optimizedPlan, DailyPlan previousDayPlan) {
         List<UITripItemDTO> uiItems = new ArrayList<>();
         DailyPlan dailyPlan = optimizedPlan.getDailyPlan();
         List<GuideDTO> guides = optimizedPlan.getGuides();
 
-        // destinations를 UITripItemDTO로 변환
+        // 시작 지점 추가 (전날 숙소 또는 당일 숙소)
+        Destination startAccommodation = (previousDayPlan != null)
+                ? previousDayPlan.getAccommodation()
+                : dailyPlan.getAccommodation();
+        uiItems.add(UITripItemDTO.builder()
+                .name(startAccommodation.getName())
+                .address(startAccommodation.getAddress())
+                .type("ACCOMMODATION")
+                .color("red")
+                .travelTimeMinutes(0)
+                .distanceToNext(guides.isEmpty() ? 0.0 : guides.get(0).getDistance() / 1000.0)
+                .build());
+
+        // 중간 관광지들
         for (int i = 0; i < dailyPlan.getDestinations().size(); i++) {
             Destination dest = dailyPlan.getDestinations().get(i);
-            GuideDTO guide = guides.get(i);  // 인덱스 매칭이 맞는지 확인 필요
+            GuideDTO guide = guides.get(i);
+            Double nextDistance = (i < guides.size() - 1) ? guides.get(i + 1).getDistance() / 1000.0 : 0.0;
 
             uiItems.add(UITripItemDTO.builder()
                     .name(dest.getName())
                     .address(dest.getAddress())
                     .type(dest.getType().toString())
-                    .color("red")  // color 결정 로직 필요
+                    .color("red")
                     .travelTimeMinutes(guide.getDuration() / 60000)
-                    .distanceToNext((double) guide.getDistance() / 1000.0)
+                    .distanceToNext(nextDistance)
                     .guide(guide)
                     .build());
         }
+
+        // 종료 지점 추가
+        uiItems.add(UITripItemDTO.builder()
+                .name(startAccommodation.getName())
+                .address(startAccommodation.getAddress())
+                .type("ACCOMMODATION")
+                .color("red")
+                .travelTimeMinutes(guides.isEmpty() ? (int) 0L : guides.get(guides.size() - 1).getDuration() / 60000)
+                .distanceToNext(0.0)
+                .build());
+
         return uiItems;
     }
 

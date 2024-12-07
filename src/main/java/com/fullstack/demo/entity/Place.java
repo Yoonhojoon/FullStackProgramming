@@ -30,4 +30,11 @@ public class Place {
     @Column(nullable = false)
     private double longitude;
 
+    // Constructor
+    public Place(String name, double latitude, double longitude, String address) {
+        this.name = name;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.address = address;
+    }
 }

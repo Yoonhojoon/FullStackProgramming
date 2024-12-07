@@ -1,4 +1,4 @@
-package com.fullstack.demo.dto;
+package com.fullstack.demo.dto.request;
 
 import com.fullstack.demo.entity.Itinerary;
 import com.fullstack.demo.entity.User;

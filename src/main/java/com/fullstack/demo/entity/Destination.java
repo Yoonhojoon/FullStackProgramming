@@ -1,6 +1,7 @@
 package com.fullstack.demo.entity;
 
 import com.fullstack.demo.entity.DailyPlan;
+import com.fullstack.demo.entity.naver.LatLng;
 import jakarta.persistence.*;
 import lombok.*;
 import com.fullstack.demo.entity.DestinationType;
@@ -100,5 +101,9 @@ public class Destination {
         destination.setLongitude(longitude);
         destination.setType(type);
         return destination;
+    }
+
+    public LatLng toLatLng() {
+        return new LatLng(this.latitude, this.longitude);
     }
 }

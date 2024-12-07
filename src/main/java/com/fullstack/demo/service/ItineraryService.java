@@ -1,7 +1,8 @@
 package com.fullstack.demo.service;
 
-import com.fullstack.demo.dto.ItineraryCreateRequestDto;
+
 import com.fullstack.demo.dto.ItineraryResponseDto;
+import com.fullstack.demo.dto.request.ItineraryCreateRequestDto;
 import com.fullstack.demo.entity.Itinerary;
 import com.fullstack.demo.entity.User;
 import com.fullstack.demo.repository.ItineraryRepository;

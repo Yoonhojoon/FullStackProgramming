@@ -1,244 +1,137 @@
 package com.fullstack.demo.service;
 
-import com.fullstack.demo.entity.DailyPlan;
-import com.fullstack.demo.entity.Destination;
-import com.fullstack.demo.entity.DestinationType;
-import com.fullstack.demo.entity.Itinerary;
-import com.google.maps.model.*;
+import com.fullstack.demo.dto.*;
+import com.fullstack.demo.dto.response.DirectionsResponse;
+import com.fullstack.demo.entity.*;
+import com.fullstack.demo.entity.naver.LatLng;
+import com.fullstack.demo.entity.naver.Leg;
+import com.fullstack.demo.entity.naver.OptimizedRoute;
+import com.fullstack.demo.repository.ItineraryRepository;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 public class TripPlanningService {
-    private final GoogleMapsService googleMapsService;
 
-    public TripPlanningService(GoogleMapsService googleMapsService) {
-        this.googleMapsService = googleMapsService;
+    @Data
+    @AllArgsConstructor
+    public static class OptimizationResult {
+        private List<DailyPlan> dailyPlans;
+        private List<DirectionsResponse> directionsResponses;  // 각 일자별 경로 정보
+    }
+    private final DirectionsService directionsService;
+    private final ItineraryRepository itineraryRepository;
+
+    public TripPlanningService(DirectionsService directionsService, ItineraryRepository itineraryRepository) {
+        this.directionsService = directionsService;
+        this.itineraryRepository = itineraryRepository;
     }
 
-    private void optimizeDailyRoute(DailyPlan dailyPlan, DailyPlan previousDayPlan, TravelMode travelMode) {
+    private List<GuideDTO> optimizeDailyRoute(DailyPlan dailyPlan, DailyPlan previousDayPlan) {
         List<Destination> spots = dailyPlan.getDestinations().stream()
                 .filter(d -> d.getType() == DestinationType.SPOT)
                 .collect(Collectors.toList());
 
-        if (spots.isEmpty()) {
-            return;
-        }
+        if (spots.isEmpty()) return new ArrayList<>();
 
-        // 출발지는 이전 날의 숙소 (첫째날이면 당일 숙소)
-        String origin = (previousDayPlan != null)
-                ? previousDayPlan.getAccommodation().getAddress()
-                : dailyPlan.getAccommodation().getAddress();
+        // 출발지 좌표
+        LatLng originLatLng = (previousDayPlan != null)
+                ? new LatLng(previousDayPlan.getAccommodation().getLatitude(),
+                previousDayPlan.getAccommodation().getLongitude())
+                : new LatLng(dailyPlan.getAccommodation().getLatitude(),
+                dailyPlan.getAccommodation().getLongitude());
 
-        // 도착지는 당일 숙소
-        String destination = dailyPlan.getAccommodation().getAddress();
+        // 도착지 좌표
+        LatLng destinationLatLng = new LatLng(dailyPlan.getAccommodation().getLatitude(),
+                dailyPlan.getAccommodation().getLongitude());
 
-        String[] waypoints = spots.stream()
-                .map(Destination::getAddress)
-                .toArray(String[]::new);
+        // 경유지 좌표들
+        LatLng[] waypointLatLngs = spots.stream()
+                .map(spot -> new LatLng(spot.getLatitude(), spot.getLongitude()))
+                .toArray(LatLng[]::new);
 
-        DirectionsResult result = null;
+        OptimizedRoute result = null;
         try {
-            result = googleMapsService.getOptimizedRoute(
-                    origin,
-                    destination,
-                    waypoints,
-                    travelMode
-            );
+            result = directionsService.getOptimizedRoute(originLatLng, destinationLatLng, waypointLatLngs);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Failed to optimize route", e);
         }
 
         List<Destination> optimizedSpots = new ArrayList<>();
-        int[] waypointOrder = result.routes[0].waypointOrder;
+        int[] waypointOrder = result.getWaypointOrder();
 
-        if (waypointOrder.length == 0) {
-            optimizedSpots.addAll(spots); // 최적화 불가 시 기존 순서 유지
-        } else {
-            for (int order : waypointOrder) {
-                Destination spot = spots.get(order);
-                optimizedSpots.add(spot);
-            }
+        for (int order : waypointOrder) {
+            optimizedSpots.add(spots.get(order));
         }
 
         dailyPlan.getDestinations().clear();
         dailyPlan.getDestinations().addAll(optimizedSpots);
 
-        updateRouteDetails(dailyPlan, result, travelMode);
+        updateRouteDetails(dailyPlan, result);
+
+        // Guide 정보 추출 및 반환
+        return result.getDirections().getRoute().getTrafast().stream()
+                .flatMap(trafast -> trafast.getGuide().stream())
+                .map(guide -> GuideDTO.builder()
+                        .distance(guide.getDistance())
+                        .duration(guide.getDuration())
+                        .instructions(guide.getInstructions())
+                        .type(guide.getType())
+                        .pointIndex(guide.getPointIndex())
+                        .build())
+                .collect(Collectors.toList());
     }
-    private void distributeSpots(List<Destination> spots, List<DailyPlan> dailyPlans, TravelMode travelMode) {
+    private void updateRouteDetails(DailyPlan dailyPlan, OptimizedRoute optimizedRoute) {
+        DirectionsResponse response = optimizedRoute.getDirections();
+        List<Destination> spots = dailyPlan.getDestinations();
+
+        // Trafast의 첫 번째 요소에서 summary 정보를 가져옵니다
+        DirectionsResponse.Route.Trafast routeInfo = response.getRoute().getTrafast().get(0);
+        DirectionsResponse.Route.Summary summary = routeInfo.getSummary();
+
+        // 거리는 미터, 시간은 밀리초 단위로 오므로 변환이 필요합니다
+        double totalDistanceInKm = summary.getDistance() / 1000.0;  // meters to km
+        int totalTimeInMinutes = summary.getDuration() / 60000;  // milliseconds to minutes
+
+        // 순서대로 spots의 orderInDay 설정
+        for (int i = 0; i < spots.size(); i++) {
+            Destination current = spots.get(i);
+            current.setOrderInDay(i + 1);
+        }
+
+        // 관광지당 1시간 체류 시간 추가
+        totalTimeInMinutes += spots.size() * 60;
+
+        dailyPlan.setTotalDistance(totalDistanceInKm);
+        dailyPlan.setTotalTravelTime(totalTimeInMinutes);
+    }
+
+    private void distributeSpots(List<Destination> spots, List<DailyPlan> dailyPlans) {
         Map<DailyPlan, List<Destination>> planSpots = new HashMap<>();
 
         for (Destination spot : spots) {
-            DailyPlan bestPlan = findBestDayPlan(spot, dailyPlans, travelMode);
+            DailyPlan bestPlan = findBestDayPlan(spot, dailyPlans);
             planSpots.computeIfAbsent(bestPlan, k -> new ArrayList<>()).add(spot);
         }
 
         // 각 일자별로 할당된 관광지 설정
         for (Map.Entry<DailyPlan, List<Destination>> entry : planSpots.entrySet()) {
-            DailyPlan plan = entry.getKey();
+            DailyPlan dailyPlan = entry.getKey();  // DailyPlan으로 수정
             List<Destination> plannedSpots = entry.getValue();
 
             // destinations 리스트에 spot들을 추가하고 관계 설정
             for (Destination spot : plannedSpots) {
-                spot.setDailyPlan(plan);
-                plan.getDestinations().add(spot);
+                spot.setDailyPlan(dailyPlan);  // dailyPlan으로 수정
+                dailyPlan.getDestinations().add(spot);
             }
         }
-    }
-
-    private void optimizeDailyRoute(DailyPlan dailyPlan, TravelMode travelMode) {
-        Destination accommodation = dailyPlan.getAccommodation();
-        List<Destination> spots = dailyPlan.getDestinations().stream()
-                .filter(d -> d.getType() == DestinationType.SPOT)
-                .collect(Collectors.toList());
-
-        if (spots.isEmpty()) {
-            return;
-        }
-
-        String[] waypoints = spots.stream()
-                .map(Destination::getAddress)
-                .toArray(String[]::new);
-
-        DirectionsResult result = null;
-        try {
-            result = googleMapsService.getOptimizedRoute(
-                    accommodation.getAddress(),
-                    accommodation.getAddress(),
-                    waypoints,
-                    travelMode
-            );
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-        // 최적화된 경로대로 orderInDay 설정
-        List<Destination> optimizedSpots = new ArrayList<>();
-        int[] waypointOrder = result.routes[0].waypointOrder;
-
-        for (int order : waypointOrder) {
-            Destination spot = spots.get(order);
-            optimizedSpots.add(spot);
-        }
-
-        // destinations 리스트 업데이트
-        dailyPlan.getDestinations().clear();
-        dailyPlan.getDestinations().addAll(optimizedSpots);
-
-        updateRouteDetails(dailyPlan, result, travelMode);
-    }
-
-    private void updateRouteDetails(DailyPlan dailyPlan, DirectionsResult result, TravelMode travelMode) {
-        List<Destination> spots = dailyPlan.getDestinations();
-        double totalDistanceInKm = 0.0;
-        int totalTimeInMinutes = 0;
-
-        for (int i = 0; i < spots.size(); i++) {
-            Destination current = spots.get(i);
-
-            if (i < spots.size() - 1) {
-                DirectionsLeg leg = result.routes[0].legs[i];
-                double distanceToNext = leg.distance.inMeters / 1000.0;
-                int timeToNext = (int)(leg.duration.inSeconds / 60);
-
-                if (travelMode == TravelMode.TRANSIT && leg.steps != null) {
-                    StringBuilder transitDetails = new StringBuilder();
-                    for (DirectionsStep step : leg.steps) {
-                        if (step.travelMode == TravelMode.TRANSIT) {
-                            TransitDetails transit = step.transitDetails;
-                            transitDetails.append(String.format(
-                                    "- %s에서 %s 탑승 (%s)\n",
-                                    transit.departureStop.name,
-                                    transit.line.shortName != null ? transit.line.shortName : transit.line.name,
-                                    transit.departureTime.toString()
-                            ));
-                            transitDetails.append(String.format(
-                                    "- %s에서 하차 (%s)\n",
-                                    transit.arrivalStop.name,
-                                    transit.arrivalTime.toString()
-                            ));
-                        } else if (step.travelMode == TravelMode.WALKING) {
-                            transitDetails.append(String.format(
-                                    "- 도보 %d분\n",
-                                    (int)(step.duration.inSeconds / 60)
-                            ));
-                        }
-                    }
-                    current.setTransitDetails(transitDetails.toString());
-                } else if (travelMode == TravelMode.DRIVING) {
-                    // 운전 경로 정보 (선택적)
-                    if (leg.steps != null) {
-                        StringBuilder drivingDetails = new StringBuilder();
-                        for (DirectionsStep step : leg.steps) {
-                            drivingDetails.append(String.format(
-                                    "- %s\n",
-                                    step.htmlInstructions.replaceAll("<[^>]*>", "")
-                            ));
-                        }
-                        current.setDrivingDetails(drivingDetails.toString());
-                    }
-                }
-
-                current.setDistanceToNext(distanceToNext);
-                current.setTimeToNext(timeToNext);
-
-                totalDistanceInKm += distanceToNext;
-                totalTimeInMinutes += timeToNext;
-            }
-
-            current.setOrderInDay(i + 1);
-        }
-
-        // 마지막 관광지에서 숙소로 돌아가는 구간
-        if (!spots.isEmpty()) {
-            DirectionsLeg lastLeg = result.routes[0].legs[spots.size()];
-            totalDistanceInKm += lastLeg.distance.inMeters / 1000.0;
-            totalTimeInMinutes += lastLeg.duration.inSeconds / 60;
-
-            if (travelMode == TravelMode.TRANSIT && lastLeg.steps != null) {
-                StringBuilder transitDetails = new StringBuilder();
-                for (DirectionsStep step : lastLeg.steps) {
-                    if (step.travelMode == TravelMode.TRANSIT) {
-                        TransitDetails transit = step.transitDetails;
-                        transitDetails.append(String.format(
-                                "- %s에서 %s 탑승 (%s)\n",
-                                transit.departureStop.name,
-                                transit.line.shortName != null ? transit.line.shortName : transit.line.name,
-                                transit.departureTime.toString()
-                        ));
-                        transitDetails.append(String.format(
-                                "- %s에서 하차 (%s)\n",
-                                transit.arrivalStop.name,
-                                transit.arrivalTime.toString()
-                        ));
-                    } else if (step.travelMode == TravelMode.WALKING) {
-                        transitDetails.append(String.format(
-                                "- 도보 %d분\n",
-                                (int)(step.duration.inSeconds / 60)
-                        ));
-                    }
-                }
-                spots.get(spots.size()-1).setLastTransitDetails(transitDetails.toString());
-            } else if (travelMode == TravelMode.DRIVING && lastLeg.steps != null) {
-                StringBuilder drivingDetails = new StringBuilder();
-                for (DirectionsStep step : lastLeg.steps) {
-                    drivingDetails.append(String.format(
-                            "- %s\n",
-                            step.htmlInstructions.replaceAll("<[^>]*>", "")
-                    ));
-                }
-                spots.get(spots.size()-1).setLastDrivingDetails(drivingDetails.toString());
-            }
-        }
-
-        // 관광지 체류 시간 추가 (각 1시간)
-        totalTimeInMinutes += spots.size() * 60;
-
-        dailyPlan.setTotalDistance(totalDistanceInKm);
-        dailyPlan.setTotalTravelTime(totalTimeInMinutes);
     }
 
     private double calculateDistance(Destination a, Destination b) {
@@ -259,7 +152,7 @@ public class TripPlanningService {
         return 6371 * c; // 지구 반경(km) * c
     }
 
-    private DailyPlan findBestDayPlan(Destination spot, List<DailyPlan> dailyPlans, TravelMode travelMode) {
+    private DailyPlan findBestDayPlan(Destination spot, List<DailyPlan> dailyPlans) {
         DailyPlan bestPlan = null;
         double shortestDistance = Double.MAX_VALUE;
 
@@ -273,37 +166,162 @@ public class TripPlanningService {
                 bestPlan = plan;
             }
         }
+        // 적절한 Plan이 없으면 기본 Plan 생성
+        if (bestPlan == null) {
+            bestPlan = createDefaultPlan(spot);
+        }
 
         return bestPlan;
     }
 
+
+    private DailyPlan createDefaultPlan(Destination spot) {
+        DailyPlan defaultPlan = new DailyPlan();
+        defaultPlan.setDestinations(new ArrayList<>());
+        // 필요한 초기 설정 추가
+        return defaultPlan;
+    }
+
+
     private boolean canAddSpotToPlan(DailyPlan plan, Destination spot) {
         // 하루 최대 방문 가능 관광지 수나 다른 제약 조건을 여기서 체크할 수 있습니다
-        // 현재는 단순히 true를 반환하지만, 필요한 경우 로직을 추가할 수 있습니다
         return true;
     }
+    public List<UITripItemDTO> convertToUITripItems(OptimizedDailyPlanDto optimizedPlan) {
+        List<UITripItemDTO> uiItems = new ArrayList<>();
+        DailyPlan dailyPlan = optimizedPlan.getDailyPlan();
+        List<GuideDTO> guides = optimizedPlan.getGuides();
 
-    public List<DailyPlan> optimizeTrip(Itinerary itinerary, Map<Integer, Destination> accommodationsByDay,
-                                        List<Destination> spots,
-                                        TravelMode travelMode) {
+        // destinations를 UITripItemDTO로 변환
+        for (int i = 0; i < dailyPlan.getDestinations().size(); i++) {
+            Destination dest = dailyPlan.getDestinations().get(i);
+            GuideDTO guide = guides.get(i);  // 인덱스 매칭이 맞는지 확인 필요
+
+            uiItems.add(UITripItemDTO.builder()
+                    .name(dest.getName())
+                    .address(dest.getAddress())
+                    .type(dest.getType().toString())
+                    .color("red")  // color 결정 로직 필요
+                    .travelTimeMinutes(guide.getDuration())
+                    .distanceToNext((double) guide.getDistance())
+                    .guide(guide)
+                    .build());
+        }
+        return uiItems;
+    }
+
+    public List<OptimizedDailyPlanDto> optimizeTrip(Itinerary itinerary, Map<Integer, Destination> accommodationsByDay,
+                                                    List<Destination> spots) {
+        System.out.println("Accommodations map size: " + accommodationsByDay.size());
+        accommodationsByDay.forEach((day, acc) ->
+                System.out.println("Day " + day + " accommodation: " + acc));
+
         List<DailyPlan> dailyPlans = new ArrayList<>();
-        for (int day = 0; day < accommodationsByDay.size(); day++) {
+        List<OptimizedDailyPlanDto> optimizedPlans = new ArrayList<>();
+
+        int totalDays = accommodationsByDay.keySet().stream()
+                .mapToInt(Integer::intValue)
+                .max()
+                .orElse(0);
+
+        // DailyPlan 생성 부분은 동일
+        for (int day = 0; day < totalDays; day++) {
             DailyPlan dailyPlan = new DailyPlan();
-            dailyPlan.setDayNumber(day + 1);  // 표시용 날짜는 1부터 시작
+            dailyPlan.setDayNumber(day + 1);
             dailyPlan.setItinerary(itinerary);
-            dailyPlan.setAccommodation(accommodationsByDay.get(day + 1));
-            dailyPlan.setDestinations(new ArrayList<>()); // 이 부분 추가
+
+            Destination accommodation = accommodationsByDay.get(day + 1);
+            dailyPlan.setAccommodation(accommodation);
+            dailyPlan.setDestinations(new ArrayList<>());
             dailyPlans.add(dailyPlan);
+
+            // 새로운 DTO 생성 및 추가
+            OptimizedDailyPlanDto optimizedPlan = new OptimizedDailyPlanDto();
+            optimizedPlan.setDailyPlan(dailyPlan);
+            optimizedPlan.setGuides(new ArrayList<>());  // 가이드 정보는 나중에 채워짐
+            optimizedPlans.add(optimizedPlan);
         }
 
-        distributeSpots(spots, dailyPlans, travelMode);
+        distributeSpots(spots, dailyPlans);
 
-        // 각 일자별로 방문 순서 최적화할 때 이전 날짜 정보 전달
+        // 최적화 및 가이드 정보 추가
         for (int i = 0; i < dailyPlans.size(); i++) {
             DailyPlan previousDayPlan = (i > 0) ? dailyPlans.get(i-1) : null;
-            optimizeDailyRoute(dailyPlans.get(i), previousDayPlan, travelMode);
+            DailyPlan currentPlan = dailyPlans.get(i);
+
+            // 경로 최적화 및 가이드 정보 획득
+            List<GuideDTO> guides = optimizeDailyRoute(currentPlan, previousDayPlan);
+            optimizedPlans.get(i).setGuides(guides);
         }
 
-        return dailyPlans;
+        return optimizedPlans;
     }
+    public Itinerary saveOptimizedItinerary(
+            User user,
+            String title,
+            String description,
+            LocalDate startDate,
+            LocalDate endDate,
+            List<DailyPlan> optimizedPlans
+    ) {
+        Itinerary itinerary = Itinerary.builder()
+                .user(user)
+                .title(title)
+                .description(description)
+                .startDate(startDate)
+                .endDate(endDate)
+                .build();
+
+        for (DailyPlan dailyPlan : optimizedPlans) {
+            itinerary.addDailyPlan(dailyPlan);
+        }
+
+        return itineraryRepository.save(itinerary);
+    }
+
+
+    private String getColorForIndex(int index) {
+        // UI에 맞는 색상 코드 반환
+        String[] colors = {"#FF0000", "#FF9800", "#FFEB3B", "#4CAF50"};  // 예시 색상들
+        return colors[index % colors.length];
+    }
+
+
+    private List<UITripItemDTO> convertDestinationsToItems(DailyPlan plan, List<DirectionsResponse.Route.Guide> guides) {
+        List<Destination> sortedDestinations = new ArrayList<>(plan.getDestinations());
+        sortedDestinations.sort(Comparator.comparing(Destination::getOrderInDay));
+
+        List<UITripItemDTO> items = new ArrayList<>();
+
+        for (int i = 0; i < sortedDestinations.size(); i++) {
+            Destination dest = sortedDestinations.get(i);
+            DirectionsResponse.Route.Guide guide = (i < guides.size()) ? guides.get(i) : null;
+
+            items.add(UITripItemDTO.builder()
+                    .name(dest.getName())
+                    .address(dest.getAddress())
+                    .type(dest.getType().toString())
+                    .color(determineColor(dest.getType()))
+                    .travelTimeMinutes(dest.getTimeToNext())
+                    .distanceToNext(dest.getDistanceToNext())
+                    .guide(guide != null ? GuideDTO.builder()
+                            .distance(guide.getDistance())
+                            .duration(guide.getDuration())
+                            .instructions(guide.getInstructions())
+                            .type(guide.getType())
+                            .build() : null)
+                    .build());
+        }
+
+        return items;
+    }
+    private String determineColor(DestinationType type) {
+        return switch (type) {
+            case SPOT -> "#FFD700";     // 관광지
+            case ACCOMMODATION -> "#FF6B6B";  // 숙소
+            default -> "#4CAF50";
+        };
+    }
+
+
 }

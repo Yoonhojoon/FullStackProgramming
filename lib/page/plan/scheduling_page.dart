@@ -10,9 +10,10 @@ import 'package:http/http.dart' as http;
 
 import '../../entity/DailyPlan.dart';
 import '../../entity/Destination.dart';
+import '../../entity/TripItem.dart';
 
 class SchedulingPage extends StatefulWidget {
-  final Function(List<DailyPlan> plans) onPlansCreated;
+  final Function(List<TripItem> plans) onPlansCreated;
 
   const SchedulingPage({Key? key, required this.onPlansCreated}) : super(key: key);
   @override
@@ -21,9 +22,11 @@ class SchedulingPage extends StatefulWidget {
 
 class _SchedulingPageState extends State<SchedulingPage> {
   List<DateTime?> _selectedDates = [];
+
   bool _isExpanded = true;
   Map<int, Map<String, dynamic>> _selectedAccommodations = {};
   String _selectedTravelMode = 'DRIVING';
+
   final apiService = ApiService();
 
   List<Map<String, dynamic>> _getAccommodations(DestinationProvider provider) {
@@ -117,7 +120,7 @@ class _SchedulingPageState extends State<SchedulingPage> {
           child: SingleChildScrollView(
             child: Column(
               children: List.generate(
-                _selectedDates.length - 1,
+                _selectedDates.length, // 여기를 수정: -1 제거
                     (index) => Container(
                   decoration: BoxDecoration(
                     border: Border(
@@ -288,23 +291,31 @@ class _SchedulingPageState extends State<SchedulingPage> {
 
                       final accommodationMap = Map.fromEntries(
                           _selectedAccommodations.entries.map(
-                                  (e) => MapEntry(e.key, Destination.fromJson(e.value))
+                                  (e) => MapEntry(e.key + 1, Destination.fromJson(e.value))
                           )
                       );
 
                       print('Request data:');
                       print('Destinations: ${destinations.map((d) => d.toJson()).toList()}');
                       print('Accommodations: ${accommodationMap.map((k, v) => MapEntry(k, v.toJson()))}');
-                      print('Travel mode: $_selectedTravelMode');
 
-                      final plans = await apiService.optimizeTrip(
+                      final tripItems = await apiService.optimizeTrip(  // plans를 tripItems로 변경
                         accommodations: accommodationMap,
                         spots: destinations,
                         travelMode: _selectedTravelMode,
                       );
+
+                      // 상위 위젯으로 생성된 계획 전달
+                      widget.onPlansCreated(tripItems);
+
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => ScheduleListPage(dailyPlans: plans)),
+                        MaterialPageRoute(
+                          builder: (context) => ScheduleListPage(
+                            tripItems: tripItems,
+                            dailyPlans: [], // 또는 실제 dailyPlans 데이터
+                          ),
+                        ),
                       );
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(

@@ -30,8 +30,8 @@ class DailyPlan {
       destinations: (json['destinations'] as List)
           .map((x) => Destination.fromJson(x))
           .toList(),
-      totalDistance: json['totalDistance'],
-      totalTravelTime: json['totalTravelTime'],
+      totalDistance: (json['totalDistance'] as num?)?.toDouble() ?? 0.0,
+      totalTravelTime: (json['totalTravelTime'] as num?)?.toInt() ?? 0,
     );
   }
 

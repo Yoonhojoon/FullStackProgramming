@@ -4,6 +4,8 @@ import 'package:mytour/page/plan/scheduling_page.dart';
 import 'package:provider/provider.dart';
 import '../dailyplan_provider.dart';
 import '../entity/DailyPlan.dart';
+import '../entity/Destination.dart';
+import '../entity/TripItem.dart';
 import 'google_map_screen.dart';
 import 'home_screen.dart';
 
@@ -15,33 +17,85 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0; // 현재 선택된 인덱스
-
-  // 각 탭에 표시할 화면 목록
-  final List<Widget> _pages = [
-    const HomeScreen(),
-    GoogleMapScreen(),
-    Consumer<DailyPlanProvider>(
-      builder: (context, provider, child) => ScheduleListPage(dailyPlans: provider.plans),
-    ),
-    SchedulingPage(onPlansCreated: (List<DailyPlan> plans) {  },),
-  ];
+  int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        // title: const Text('My Tour App'),
+    final List<Widget> _pages = [
+      const HomeScreen(),
+      GoogleMapScreen(),
+      Consumer<DailyPlanProvider>(
+        builder: (context, provider, child) => ScheduleListPage(
+          tripItems: [],
+          dailyPlans: provider.plans,
+        ),
       ),
-      body: _pages[_currentIndex], // 현재 선택된 페이지 표시
+      SchedulingPage(
+        onPlansCreated: (List<TripItem> tripItems) {
+          int dayNumber = 1;
+          double totalDist = 0;
+          int totalTime = 0;
+          List<Destination> destinations = [];
+          Destination? accommodation;
+
+          for (var item in tripItems) {
+            final destination = Destination(
+              id: destinations.length + 1,
+              type: item.type.toUpperCase() == 'ACCOMMODATION'
+                  ? DestinationType.ACCOMMODATION
+                  : DestinationType.SPOT,
+              name: item.name,
+              address: item.address,
+              latitude: 0.0,
+              longitude: 0.0,
+              orderInDay: destinations.length + 1,
+              distanceToNext: item.distanceToNext,
+              timeToNext: item.travelTimeMinutes,
+              transitDetails: null,
+              lastTransitDetails: null,
+              drivingDetails: null,
+              lastDrivingDetails: null,
+            );
+
+            if (item.type.toUpperCase() == 'ACCOMMODATION') {
+              accommodation = destination;
+            } else {
+              destinations.add(destination);
+              totalDist += item.distanceToNext;
+              totalTime += item.travelTimeMinutes;
+            }
+          }
+
+          final dailyPlans = [
+            DailyPlan(
+              id: dayNumber,
+              dayNumber: dayNumber,
+              accommodation: accommodation,
+              destinations: destinations,
+              totalDistance: totalDist,
+              totalTravelTime: totalTime,
+            )
+          ];
+
+          Provider.of<DailyPlanProvider>(context, listen: false).updatePlans(dailyPlans);
+        },
+      ),
+      const ProfileScreen(),
+    ];
+
+
+    return Scaffold(
+      appBar: AppBar(),
+      body: _pages[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.white, // 네비게이션 바 색상을 하얀색으로 설정
-        selectedItemColor: Colors.black, // 선택된 아이콘 색상을 검은색으로 설정
-        unselectedItemColor: Colors.black, // 선택되지 않은 아이콘 색상을 검은색으로 설정
-        currentIndex: _currentIndex, // 현재 선택된 인덱스
+        backgroundColor: Colors.white,
+        selectedItemColor: Colors.black,
+        unselectedItemColor: Colors.black,
+        currentIndex: _currentIndex,
+        type: BottomNavigationBarType.fixed, // 5개 이상의 아이템을 위해 추가
         onTap: (index) {
           setState(() {
-            _currentIndex = index; // 인덱스 업데이트
+            _currentIndex = index;
           });
         },
         items: const [
@@ -71,8 +125,6 @@ class _MainScreenState extends State<MainScreen> {
   }
 }
 
-
-// Profile 화면 예제
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 

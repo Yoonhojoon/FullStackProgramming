@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:mytour/entity/TripItem.dart';
 
 import '../../entity/DailyPlan.dart';
 import '../../entity/Destination.dart';
@@ -7,7 +8,7 @@ import '../../entity/Destination.dart';
 class ScheduleListPage extends StatelessWidget {
   final List<DailyPlan> dailyPlans;
 
-  const ScheduleListPage({Key? key, required this.dailyPlans}) : super(key: key);
+  const ScheduleListPage({Key? key, required this.dailyPlans, required List<TripItem> tripItems}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

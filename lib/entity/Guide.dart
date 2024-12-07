@@ -15,11 +15,11 @@ class Guide {
 
   factory Guide.fromJson(Map<String, dynamic> json) {
     return Guide(
-      distance: json['distance'],
-      duration: json['duration'],
-      instructions: json['instructions'],
-      type: json['type'],
-      pointIndex: json['pointIndex'],
+      distance: json['distance'] as int,  // 정수라고 명시
+      duration: json['duration'] as int,  // 정수라고 명시
+      instructions: json['instructions'] as String,  // 문자열이라고 명시
+      type: json['type'] as int,         // 정수라고 명시
+      pointIndex: json['pointIndex'] as int,  // 정수라고 명시
     );
   }
 }

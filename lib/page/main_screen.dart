@@ -4,7 +4,9 @@ import 'package:mytour/page/plan/scheduling_page.dart';
 import 'package:provider/provider.dart';
 import '../dailyplan_provider.dart';
 import '../entity/DailyPlan.dart';
+import '../entity/DailySchedule.dart';
 import '../entity/Destination.dart';
+import '../entity/ScheduleItem.dart';
 import '../entity/TripItem.dart';
 import 'google_map_screen.dart';
 import 'home_screen.dart';
@@ -26,58 +28,30 @@ class _MainScreenState extends State<MainScreen> {
       GoogleMapScreen(),
       Consumer<DailyPlanProvider>(
         builder: (context, provider, child) => ScheduleListPage(
-          tripItems: [],
-          dailyPlans: provider.plans,
+          dailySchedules: provider.schedules,
         ),
       ),
       SchedulingPage(
         onPlansCreated: (List<TripItem> tripItems) {
-          int dayNumber = 1;
-          double totalDist = 0;
-          int totalTime = 0;
-          List<Destination> destinations = [];
-          Destination? accommodation;
-
-          for (var item in tripItems) {
-            final destination = Destination(
-              id: destinations.length + 1,
-              type: item.type.toUpperCase() == 'ACCOMMODATION'
-                  ? DestinationType.ACCOMMODATION
-                  : DestinationType.SPOT,
-              name: item.name,
-              address: item.address,
-              latitude: 0.0,
-              longitude: 0.0,
-              orderInDay: destinations.length + 1,
-              distanceToNext: item.distanceToNext,
-              timeToNext: item.travelTimeMinutes,
-              transitDetails: null,
-              lastTransitDetails: null,
-              drivingDetails: null,
-              lastDrivingDetails: null,
+          // 현재 시간을 기준으로 시작
+          DateTime currentTime = DateTime.now();
+          List<ScheduleItem> scheduleItems = tripItems.map((item) {
+            return ScheduleItem(
+              tripItem: item,
+              startTime: currentTime,
+              duration: const Duration(hours: 1),  // 기본값으로 설정, 나중에 사용자가 수정
+              travelTime: Duration(minutes: item.travelTimeMinutes),
             );
+          }).toList();
 
-            if (item.type.toUpperCase() == 'ACCOMMODATION') {
-              accommodation = destination;
-            } else {
-              destinations.add(destination);
-              totalDist += item.distanceToNext;
-              totalTime += item.travelTimeMinutes;
-            }
-          }
+          // 모든 항목을 하나의 DailySchedule로 묶기
+          final dailySchedule = DailySchedule(
+            day: 1,
+            items: scheduleItems,
+          );
 
-          final dailyPlans = [
-            DailyPlan(
-              id: dayNumber,
-              dayNumber: dayNumber,
-              accommodation: accommodation,
-              destinations: destinations,
-              totalDistance: totalDist,
-              totalTravelTime: totalTime,
-            )
-          ];
-
-          Provider.of<DailyPlanProvider>(context, listen: false).updatePlans(dailyPlans);
+          Provider.of<DailyPlanProvider>(context, listen: false)
+              .setSchedules([dailySchedule]);
         },
       ),
       const ProfileScreen(),

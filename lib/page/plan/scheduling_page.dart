@@ -9,7 +9,9 @@ import 'package:mytour/destination_provider.dart';
 import 'package:http/http.dart' as http;
 
 import '../../entity/DailyPlan.dart';
+import '../../entity/DailySchedule.dart';
 import '../../entity/Destination.dart';
+import '../../entity/ScheduleItem.dart';
 import '../../entity/TripItem.dart';
 
 class SchedulingPage extends StatefulWidget {
@@ -33,6 +35,27 @@ class _SchedulingPageState extends State<SchedulingPage> {
     return provider.destinations
         .where((dest) => dest['type'] == 'ACCOMMODATION')
         .toList();
+  }
+
+  List<DailySchedule> convertToDaily(List<TripItem> tripItems) {
+    List<DailySchedule> dailySchedules = [];
+    int itemsPerDay = 3; // 하루 3개 장소 기준
+
+    for (int i = 0; i < tripItems.length; i += itemsPerDay) {
+      int day = (i ~/ itemsPerDay) + 1;
+      var dayItems = tripItems.skip(i).take(itemsPerDay).map((trip) {
+        return ScheduleItem(
+          tripItem: trip,
+          startTime: DateTime.now(), // 임시로 현재 시간
+          duration: const Duration(hours: 1), // 임시로 1시간
+          travelTime: Duration(minutes: trip.travelTimeMinutes),
+        );
+      }).toList();
+
+      dailySchedules.add(DailySchedule(day: day, items: dayItems));
+    }
+
+    return dailySchedules;
   }
 
   void _showDestinationList(BuildContext context) {
@@ -312,8 +335,7 @@ class _SchedulingPageState extends State<SchedulingPage> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => ScheduleListPage(
-                            tripItems: tripItems,
-                            dailyPlans: [], // 또는 실제 dailyPlans 데이터
+                            dailySchedules: convertToDaily(tripItems),
                           ),
                         ),
                       );

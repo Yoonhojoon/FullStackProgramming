@@ -1,3 +1,8 @@
+import 'package:intl/intl.dart';
+
+import 'TripItem.dart';
+
+
 class ScheduleItem {
   final TripItem tripItem;
   DateTime startTime;
@@ -9,9 +14,8 @@ class ScheduleItem {
     required this.startTime,
     required Duration duration,
     required this.travelTime,
-  }) {
-    endTime = startTime.add(duration);
-  }
+  }) : endTime = startTime.add(duration);  // 이렇게 초기화
+
 
   // 시간 수정을 위한 메서드
   void updateTimes({DateTime? newStart, Duration? newDuration}) {

@@ -44,6 +44,8 @@ dependencies:
   google_place: ^0.4.7
   provider: ^6.0.1
   calendar_date_picker2: ^0.5.3
+  google_sign_in: ^5.4.1
+  intl: ^0.18.0  # 또는 최신 버전
 
 dev_dependencies:
   flutter_test:

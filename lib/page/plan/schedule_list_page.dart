@@ -1,135 +1,131 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mytour/entity/TripItem.dart';
+import 'package:provider/provider.dart';
 
+import '../../dailyplan_provider.dart';
 import '../../entity/DailyPlan.dart';
+import '../../entity/DailySchedule.dart';
 import '../../entity/Destination.dart';
+import '../../entity/ScheduleItem.dart';
+import '../../entity/TimeSelectionDialog.dart';
 
 class ScheduleListPage extends StatelessWidget {
-  final List<DailyPlan> dailyPlans;
+  final List<DailySchedule> dailySchedules;
 
-  const ScheduleListPage({Key? key, required this.dailyPlans, required List<TripItem> tripItems}) : super(key: key);
+  const ScheduleListPage({
+    Key? key,
+    required this.dailySchedules,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: BackButton(),
-        title: Text('계획 짜기'),
-      ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: dailyPlans.length,
-        itemBuilder: (context, index) {
-          final plan = dailyPlans[index];
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: _buildDaySchedule(plan),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildDaySchedule(DailyPlan plan) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Day Header with Total Distance and Travel Time
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: Color(0xFFFBE5D6),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            children: [
-              Text(
-                '${plan.dayNumber}일차 계획',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              Spacer(),
-              Text(
-                '총 거리: ${plan.totalDistance.toStringAsFixed(1)} km, 총 시간: ${_formatMinutes(plan.totalTravelTime)}',
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-              ),
-            ],
-          ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
         ),
-        SizedBox(height: 8),
-        // Accommodation (if exists)
-        if (plan.accommodation != null) _buildDestinationTile(plan.accommodation!, isAccommodation: true),
-        // Other Destinations
-        Column(
-          children: plan.destinations.map((destination) {
-            return _buildDestinationTile(destination);
-          }).toList(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDestinationTile(Destination destination, {bool isAccommodation = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          // Indicator for accommodation or regular destination
-          Container(
-            width: 4,
-            height: 50,
-            decoration: BoxDecoration(
-              color: isAccommodation ? Colors.orange : Colors.yellow,
-              borderRadius: BorderRadius.circular(2),
-            ),
+        title: const Text('계획 결과'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete),
+            onPressed: () {
+              // TODO: 삭제 기능 구현
+            },
           ),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Destination name
-                Text(
-                  destination.name,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                ),
-                SizedBox(height: 4),
-                // Additional details
-                if (destination.timeToNext != null && destination.distanceToNext != null)
-                  Text(
-                    '다음 목적지까지: ${destination.distanceToNext?.toStringAsFixed(1)} km, 약 ${_formatMinutes(destination.timeToNext!)}',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                  ),
-                if (destination.transitDetails != null)
-                  Row(
-                    children: [
-                      Icon(Icons.directions_transit, size: 16, color: Colors.grey[600]),
-                      SizedBox(width: 4),
-                      Text(destination.transitDetails!, style: TextStyle(fontSize: 12)),
-                    ],
-                  ),
-              ],
-            ),
-          ),
-          // Order in the day's plan
-          if (destination.orderInDay != null)
-            Text(
-              '순서: ${destination.orderInDay}',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            ),
         ],
       ),
+      body: ListView.builder(
+        itemCount: dailySchedules.length,
+        itemBuilder: (context, index) {
+          final daily = dailySchedules[index];
+          return DailyScheduleCard(schedule: daily);
+        },
+      ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.all(16),
+        child: ElevatedButton(
+          child: const Text('여행계획 공유하기'),
+          onPressed: () {
+            // TODO: 공유 기능 구현
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class DailyScheduleCard extends StatelessWidget {
+  final DailySchedule schedule;
+
+  const DailyScheduleCard({
+    Key? key,
+    required this.schedule,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.all(8),
+      child: ExpansionTile(
+        title: Text(schedule.title),
+        children: schedule.items.map((item) => ScheduleItemTile(item: item)).toList(),
+      ),
+    );
+  }
+}
+
+class ScheduleItemTile extends StatelessWidget {
+  final ScheduleItem item;
+
+  const ScheduleItemTile({
+    Key? key,
+    required this.item,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Container(
+        width: 4,
+        height: 40,
+        color: _getColorFromType(item.tripItem.type),
+      ),
+      title: Text(item.tripItem.name),
+      subtitle: Text(item.timeRangeString),
+      trailing: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.directions_car),
+          Text(item.travelTimeString),
+        ],
+      ),
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (context) => TimeSelectionDialog(
+            item: item,
+            onTimeUpdated: (startTime, duration) {
+              Provider.of<DailyPlanProvider>(context, listen: false)
+                  .updateItemTime(item, startTime, duration);
+            },
+          ),
+        );
+      },
     );
   }
 
-  // Helper to format minutes into hours and minutes
-  String _formatMinutes(int minutes) {
-    final hours = minutes ~/ 60;
-    final remainingMinutes = minutes % 60;
-    if (hours > 0) {
-      return '$hours시간 ${remainingMinutes}분';
-    } else {
-      return '${remainingMinutes}분';
+  Color _getColorFromType(String type) {
+    switch (type.toUpperCase()) {
+      case 'ACCOMMODATION':
+        return Colors.red;  // 숙소는 빨간색
+      case 'SPOT':
+        return Colors.orange;  // 관광지는 주황색
+      case 'RESTAURANT':
+        return Colors.yellow;  // 음식점은 노란색
+      default:
+        return Colors.blue;  // 기본값은 파란색
     }
   }
-}
+  }

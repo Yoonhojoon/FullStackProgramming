@@ -1,18 +1,39 @@
 import 'package:flutter/material.dart';
+import 'package:mytour/entity/ScheduleItem.dart';
 import 'entity/DailyPlan.dart';
+import 'entity/DailySchedule.dart';
 
 class DailyPlanProvider extends ChangeNotifier {
-  List<DailyPlan> _plans = [];
+  List<DailySchedule> _schedules = [];
 
-  List<DailyPlan> get plans => _plans;
+  List<DailySchedule> get schedules => _schedules;
 
-  void setPlans(List<DailyPlan> plans) {
-    _plans = plans;
+  void setSchedules(List<DailySchedule> schedules) {
+    _schedules = schedules;
     notifyListeners();
   }
 
-  void updatePlans(List<DailyPlan> newPlans) {
-    _plans = newPlans;
-    notifyListeners();  // UI 업데이트를 위해 리스너들에게 알림
+  void updateSchedules(List<DailySchedule> newSchedules) {
+    _schedules = newSchedules;
+    notifyListeners();
+  }
+
+  // 특정 아이템의 시간을 업데이트하는 메서드 추가
+  void updateItemTime(ScheduleItem targetItem, DateTime newStartTime, Duration newDuration) {
+    for (var schedule in _schedules) {
+      final index = schedule.items.indexWhere((item) =>
+      item.tripItem.name == targetItem.tripItem.name &&
+          item.tripItem.address == targetItem.tripItem.address
+      );
+
+      if (index != -1) {
+        schedule.items[index].updateTimes(
+          newStart: newStartTime,
+          newDuration: newDuration,
+        );
+        notifyListeners();
+        return;
+      }
+    }
   }
 }

@@ -8,4 +8,6 @@ class DailySchedule {
   DailySchedule({required this.day, required this.items});
 
   String get title => '$day일차 계획';
+
+
 }

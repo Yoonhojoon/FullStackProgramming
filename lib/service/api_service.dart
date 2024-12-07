@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_place/google_place.dart';
 import 'package:dio/dio.dart';
+import '../entity/DailySchedule.dart';
 import '../entity/TripItem.dart';
 
 import '../entity/DailyPlan.dart';
@@ -69,7 +70,7 @@ class ApiService {
     }
   }
 
-  Future<List<TripItem>> optimizeTrip({
+  Future<List<DailySchedule>> optimizeTrip({
     required Map<int, Destination> accommodations,
     required List<Destination> spots,
     String travelMode = 'DRIVING',
@@ -86,7 +87,7 @@ class ApiService {
       print('API Response: ${response.data}');
 
       return (response.data as List)
-          .map((x) => TripItem.fromJson(x))
+          .map((x) => DailySchedule.fromJson(x))
           .toList();
     } catch (e) {
       throw Exception('Failed to optimize trip: ${e.toString()}');

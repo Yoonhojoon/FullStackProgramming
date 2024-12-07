@@ -322,21 +322,16 @@ class _SchedulingPageState extends State<SchedulingPage> {
                       print('Destinations: ${destinations.map((d) => d.toJson()).toList()}');
                       print('Accommodations: ${accommodationMap.map((k, v) => MapEntry(k, v.toJson()))}');
 
-                      final tripItems = await apiService.optimizeTrip(  // plans를 tripItems로 변경
+                      final schedules = await apiService.optimizeTrip(
                         accommodations: accommodationMap,
                         spots: destinations,
                         travelMode: _selectedTravelMode,
                       );
 
-                      // 상위 위젯으로 생성된 계획 전달
-                      widget.onPlansCreated(tripItems);
-
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => ScheduleListPage(
-                            dailySchedules: convertToDaily(tripItems),
-                          ),
+                          builder: (context) => ScheduleListPage(dailySchedules: schedules),
                         ),
                       );
                     } catch (e) {

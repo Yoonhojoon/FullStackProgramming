@@ -32,25 +32,28 @@ class Destination {
   });
 
   factory Destination.fromJson(Map<String, dynamic> json) {
+    print('Received JSON in Destination: $json');  // 로그 추가
     return Destination(
       id: json['destinationId'] ?? 0,  // null이면 0으로 처리
-      type: DestinationType.values.firstWhere(
+      type: json['type'] is String
+          ? DestinationType.values.firstWhere(
               (e) => e.name == json['type'],
           orElse: () {
-            print('Unexpected type: ${json['type']}'); // 예상치 못한 타입 출력
-            return DestinationType.SPOT; // 기본값
+            print('Unexpected type: ${json['type']}');
+            return DestinationType.SPOT;
           }
-      ),
-      name: json['name'],
-      address: json['address'],
-      latitude: json['latitude'],
-      longitude: json['longitude'],
+      )
+          : DestinationType.SPOT,
+      name: json['name'] ?? '',
+      address: json['address'] ?? '',
+      latitude: (json['latitude'] ?? 0).toDouble(),
+      longitude: (json['longitude'] ?? 0).toDouble(),
       transitDetails: json['transitDetails'],
       lastTransitDetails: json['lastTransitDetails'],
       drivingDetails: json['drivingDetails'],
       lastDrivingDetails: json['lastDrivingDetails'],
       orderInDay: json['orderInDay'],
-      distanceToNext: json['distanceToNext'],
+      distanceToNext: json['distanceToNext']?.toDouble(),
       timeToNext: json['timeToNext'],
     );
   }

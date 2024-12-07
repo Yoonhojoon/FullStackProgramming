@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/trips")
 @RequiredArgsConstructor
+@Slf4j
 @Tag(name = "Trip", description = "여행 일정 관련 API")
 public class TripController {
     private final TripPlanningService tripPlanningService;
@@ -46,6 +48,16 @@ public class TripController {
             List<UITripItemDTO> uiItems = new ArrayList<>();
             optimizedPlans.forEach(plan ->
                     uiItems.addAll(tripPlanningService.convertToUITripItems(plan))
+            );
+
+            // 응답 로그 추가
+            log.info("Optimized trip response: {}", uiItems);
+            // 또는 더 자세한 로그를 위해
+            uiItems.forEach(item ->
+                    log.info("Item: name={}, type={}, guide={}",
+                            item.getName(),
+                            item.getType(),
+                            item.getGuide())
             );
 
             return ResponseEntity.ok(uiItems);

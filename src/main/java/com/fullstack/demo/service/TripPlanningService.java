@@ -202,8 +202,8 @@ public class TripPlanningService {
                     .address(dest.getAddress())
                     .type(dest.getType().toString())
                     .color("red")  // color 결정 로직 필요
-                    .travelTimeMinutes(guide.getDuration())
-                    .distanceToNext((double) guide.getDistance())
+                    .travelTimeMinutes(guide.getDuration() / 60000)
+                    .distanceToNext((double) guide.getDistance() / 1000.0)
                     .guide(guide)
                     .build());
         }

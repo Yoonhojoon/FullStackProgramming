@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mytour/page/plan/schedule_list_page.dart';
 import 'package:mytour/page/plan/scheduling_page.dart';
+import 'package:mytour/page/popular_travel.dart';
 import 'package:provider/provider.dart';
 import '../dailyplan_provider.dart';
 import '../entity/DailyPlan.dart';
@@ -25,12 +26,13 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     final List<Widget> _pages = [
       const HomeScreen(),
+      PopularTravel(),
+      // Consumer<DailyPlanProvider>(
+      //   builder: (context, provider, child) => ScheduleListPage(
+      //     dailySchedules: provider.schedules,
+      //   ),
+      // ),
       GoogleMapScreen(),
-      Consumer<DailyPlanProvider>(
-        builder: (context, provider, child) => ScheduleListPage(
-          dailySchedules: provider.schedules,
-        ),
-      ),
       SchedulingPage(
         onPlansCreated: (List<TripItem> tripItems) {
           // 현재 시간을 기준으로 시작

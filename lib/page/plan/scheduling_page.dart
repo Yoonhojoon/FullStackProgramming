@@ -59,34 +59,83 @@ class _SchedulingPageState extends State<SchedulingPage> {
   }
 
   void _showDestinationList(BuildContext context) {
+    // 선택된 장소들을 추적하기 위한 Set
+    Set<int> selectedDestinations = {};
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('여행 계획 리스트'),
-        content: SizedBox(
-          width: double.maxFinite,
-          height: 400,
-          child: Consumer<DestinationProvider>(
-            builder: (context, provider, child) {
-              return ListView.builder(
-                itemCount: provider.destinations.length,
-                itemBuilder: (context, index) {
-                  final destination = provider.destinations[index];
-                  return ListTile(
-                    title: Text(destination['name'] ?? ''),
-                    subtitle: Text(destination['address'] ?? ''),
-                  );
-                },
-              );
-            },
+      builder: (context) => StatefulBuilder(  // StatefulBuilder 추가
+        builder: (context, setState) => AlertDialog(
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('여행 계획 리스트'),
+              if (selectedDestinations.isNotEmpty)
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('선택한 장소 삭제'),
+                        content: const Text('선택한 장소들을 삭제하시겠습니까?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('취소'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              // Provider를 통해 선택된 장소들 삭제
+                              Provider.of<DestinationProvider>(context, listen: false)
+                                  .removeDestinations(selectedDestinations.toList());
+                              Navigator.pop(context); // 확인 다이얼로그 닫기
+                              Navigator.pop(context); // 리스트 다이얼로그 닫기
+                            },
+                            child: const Text('삭제', style: TextStyle(color: Colors.red)),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+            ],
           ),
+          content: SizedBox(
+            width: double.maxFinite,
+            height: 400,
+            child: Consumer<DestinationProvider>(
+              builder: (context, provider, child) {
+                return ListView.builder(
+                  itemCount: provider.destinations.length,
+                  itemBuilder: (context, index) {
+                    final destination = provider.destinations[index];
+                    return CheckboxListTile(
+                      value: selectedDestinations.contains(index),
+                      onChanged: (bool? value) {
+                        setState(() {
+                          if (value == true) {
+                            selectedDestinations.add(index);
+                          } else {
+                            selectedDestinations.remove(index);
+                          }
+                        });
+                      },
+                      title: Text(destination['name'] ?? ''),
+                      subtitle: Text(destination['address'] ?? ''),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('닫기'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('닫기'),
-          ),
-        ],
       ),
     );
   }

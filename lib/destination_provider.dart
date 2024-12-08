@@ -10,8 +10,16 @@ class DestinationProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void removeDestination(Map<String, dynamic> destination) {
-    _destinations.remove(destination);
+  void removeDestinations(List<int> indices) {
+    // 인덱스를 내림차순으로 정렬 (뒤에서부터 삭제하기 위해)
+    indices.sort((a, b) => b.compareTo(a));
+
+    // 선택된 인덱스의 장소들을 삭제
+    for (int index in indices) {
+      if (index < destinations.length) {
+        destinations.removeAt(index);
+      }
+    }
     notifyListeners();
   }
 }

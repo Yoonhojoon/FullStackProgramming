@@ -39,8 +39,27 @@ class ScheduleItem {
   int get duration {
     return endTime.difference(startTime).inMinutes;
   }
+  Map<String, dynamic> toJson() {
+    return {
+      'tripItem': tripItem.toJson(),
+      'startTime': startTime.toIso8601String(),
+      'endTime': endTime.toIso8601String(),
+      'travelTime': travelTime,
+    };
+  }
+
+  factory ScheduleItem.fromJson(Map<String, dynamic> json) {
+    return ScheduleItem(
+      tripItem: TripItem.fromJson(json['tripItem']),
+      startTime: DateTime.parse(json['startTime']),
+      duration: DateTime.parse(json['endTime']).difference(DateTime.parse(json['startTime'])),
+      travelTime: Duration(minutes: json['travelTime'].inMinutes),
+    );
+  }
 
   String _formatTime(DateTime time) {
     return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
   }
+
+
 }

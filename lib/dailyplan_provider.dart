@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:mytour/entity/ScheduleItem.dart';
+import 'package:share_plus/share_plus.dart';
 import 'entity/DailyPlan.dart';
 import 'entity/DailySchedule.dart';
 
@@ -65,5 +68,18 @@ class DailyPlanProvider extends ChangeNotifier {
     }
 
     notifyListeners();
+  }
+
+  Future<void> shareScheduleWithDeeplink(BuildContext context) async {
+    // schedules를 JSON으로 변환
+    final scheduleData = jsonEncode(_schedules.map((s) => s.toJson()).toList());
+    final encodedData = base64Url.encode(utf8.encode(scheduleData));
+
+    // 딥링크 생성
+    final deeplink = 'mytour://schedule?data=$encodedData';
+    print(deeplink);
+
+    // 공유하기
+    await Share.share('내 여행 일정을 확인해보세요!\n$deeplink');
   }
 }

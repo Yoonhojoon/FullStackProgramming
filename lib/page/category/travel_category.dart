@@ -28,10 +28,10 @@ class TravelCategory extends StatelessWidget {
           child: ListView(
             scrollDirection: Axis.horizontal,
             children: [
-              _buildConceptItem('호캉스', 'assets/hotel.png'),
-              _buildConceptItem('자연', 'assets/nature.png'),
-              _buildConceptItem('가족', 'assets/family.png'),
-              _buildConceptItem('역사', 'assets/history.png'),
+              _buildConceptItem('호캉스', 'assets/images/hotel.jpg'),
+              _buildConceptItem('자연', 'assets/images/nature.jpg'),
+              _buildConceptItem('가족', 'assets/images/family.jpg'),
+              _buildConceptItem('데이트', 'assets/images/date.jpg'),
             ],
           ),
         ),

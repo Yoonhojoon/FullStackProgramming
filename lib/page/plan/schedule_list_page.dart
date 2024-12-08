@@ -1,7 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mytour/entity/TripItem.dart';
+import 'package:mytour/page/plan/schedule_map_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../dailyplan_provider.dart';
 import '../../entity/DailyPlan.dart';
@@ -76,9 +80,16 @@ class ScheduleListPage extends StatelessWidget {
             bottomNavigationBar: Container(
               padding: const EdgeInsets.all(16),
               child: ElevatedButton(
-                child: const Text('여행계획 공유하기'),
+                child: const Text('지도로 보기'),
                 onPressed: () {
-                  // TODO: 공유 기능 구현
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                      builder: (context) => ScheduleMapScreen(
+                    dailySchedules: provider.schedules,  // 전체 DailySchedule 리스트를 전달
+                    ),
+                  )
+                  );
                 },
               ),
             ),

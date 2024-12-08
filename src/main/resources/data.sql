@@ -24,12 +24,10 @@ VALUES
 -- Category 테이블 데이터
 INSERT INTO category (category_name, created_at, updated_at)
 VALUES
-    ('국내여행', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('해외여행', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('도시여행', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('자연여행', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('맛집투어', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('문화탐방', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+    ('호캉스', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('가족여행', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('데이트', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('자연', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 
 -- Post 테이블 데이터
@@ -49,8 +47,8 @@ INSERT INTO post (
 ) VALUES
       ('제주도 3박 4일 여행기',
        '제주도의 아름다운 해변과 맛있는 음식들을 소개합니다...',
-       'https://example.com/jeju-thumbnail.jpg',
-       'https://example.com/jeju-content.jpg',
+       'https://120812081208.s3.us-east-1.amazonaws.com/jeju_thumbnail.jpg',
+       'https://120812081208.s3.us-east-1.amazonaws.com/jeju_thumbnail.jpg',
        '2024-03-01',
        '2024-03-04',
        CURRENT_TIMESTAMP,

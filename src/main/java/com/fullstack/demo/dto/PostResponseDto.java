@@ -96,7 +96,7 @@ public class PostResponseDto {
                 .viewCount(post.getViewCount())
                 .likeCount(post.getLikeCount())
                 .postCategory(post.getPostCategory())
-                .boardId(post.getBoard().getBoardId())
+//                .boardId(post.getBoard().getBoardId())
                 .categories(categoryDtos)
                 .build();
     }

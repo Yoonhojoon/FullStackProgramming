@@ -177,7 +177,7 @@ public class DirectionsService {
         );
     }
 
-    // calculateDistance 메서드도 수정
+
     private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
         // 하버사인 공식을 사용한 거리 계산
         double R = 6371; // 지구의 반경 (km)

@@ -1,44 +1,60 @@
 package com.fullstack.demo.controller;
 
-import com.fullstack.demo.dto.PostCreateRequestDto;
-import com.fullstack.demo.dto.PostResponseDto;
+import com.fullstack.demo.dto.request.PostCreateRequest;
+import com.fullstack.demo.entity.Board;
+import com.fullstack.demo.entity.Category;
+import com.fullstack.demo.entity.Post;
+import com.fullstack.demo.service.CategoryService;
 import com.fullstack.demo.service.PostService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-// PostController.java
 @RestController
-@RequestMapping("/api/v1/posts")
+@RequestMapping("/api")
 @RequiredArgsConstructor
-@Tag(name = "Post", description = "게시글 관련 API")
 public class PostController {
     private final PostService postService;
+    private final CategoryService categoryService;
 
-    @Operation(summary = "게시글 작성", description = "새로운 게시글을 작성합니다.")
-    @PostMapping("/boards/{boardId}")
-    @ResponseStatus(HttpStatus.CREATED)
-    public PostResponseDto createPost(
-            @PathVariable Long boardId,
-            @RequestBody @Valid PostCreateRequestDto requestDto) {
-        return postService.createPost(boardId, requestDto);
+
+    // 게시글 목록 조회
+    @GetMapping("/posts")
+    public ResponseEntity<List<Post>> getPosts(
+            @RequestParam(required = false) String categoryName) {
+        if (categoryName != null) {
+            return ResponseEntity.ok(postService.getPostsByCategory(categoryName));
+        }
+        return ResponseEntity.ok(postService.getAllPosts());
     }
 
-    @Operation(summary = "게시판의 게시글 목록 조회", description = "특정 게시판의 모든 게시글을 조회합니다.")
-    @GetMapping("/boards/{boardId}")
-    public List<PostResponseDto> getBoardPosts(@PathVariable Long boardId) {
-        return postService.getBoardPosts(boardId);
+    // 게시글 작성
+    @PostMapping("/posts")
+    public ResponseEntity<Post> createPost(@RequestBody PostCreateRequest request) {
+        Post post = postService.createPost(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(post);
     }
 
-    @Operation(summary = "게시글 조회수 증가", description = "게시글의 조회수를 증가시킵니다.")
-    @PostMapping("/{postId}/view")
-    @ResponseStatus(HttpStatus.OK)
-    public void increaseViewCount(@PathVariable Long postId) {
-        postService.increaseViewCount(postId);
+    // 좋아요 토글
+    @PostMapping("/posts/{postId}/like")
+    public ResponseEntity<Post> toggleLike(@PathVariable Long postId) {
+        Post post = postService.toggleLike(postId);
+        return ResponseEntity.ok(post);
+    }
+
+    // 조회수 증가
+    @PostMapping("/posts/{postId}/view")
+    public ResponseEntity<Post> incrementViewCount(@PathVariable Long postId) {
+        Post post = postService.incrementViewCount(postId);
+        return ResponseEntity.ok(post);
+    }
+
+    // 카테고리 목록 조회
+    @GetMapping("/categories")
+    public ResponseEntity<List<Category>> getCategories() {
+        return ResponseEntity.ok(categoryService.getAllCategories());
     }
 }

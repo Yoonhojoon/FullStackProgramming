@@ -7,7 +7,7 @@ class TripItem {
   final String color;
   final int travelTimeMinutes;
   final double distanceToNext;
-  final Guide? guide;  // null 가능하도록 변경
+  final List<Guide> guides;  // guide를 guides로 변경
 
   TripItem({
     required this.name,
@@ -16,7 +16,7 @@ class TripItem {
     required this.color,
     required this.travelTimeMinutes,
     required this.distanceToNext,
-    this.guide,  // required 제거
+    required this.guides,  // required로 변경하고 기본값을 빈 리스트로
   });
 
   factory TripItem.fromJson(Map<String, dynamic> json) {
@@ -27,7 +27,19 @@ class TripItem {
       color: json['color'] ?? 'red',
       travelTimeMinutes: json['travelTimeMinutes'] ?? 0,
       distanceToNext: (json['distanceToNext'] ?? 0).toDouble(),
-      guide: json['guide'] != null ? Guide.fromJson(json['guide']) : null,
+      guides: json['guides'] != null
+          ? List<Guide>.from(json['guides'].map((x) => Guide.fromJson(x)))
+          : [],
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'address': address,
+    'type': type,
+    'color': color,
+    'travelTimeMinutes': travelTimeMinutes,
+    'distanceToNext': distanceToNext,
+    'guides': guides.map((guide) => guide.toJson()).toList(),
+  };
 }

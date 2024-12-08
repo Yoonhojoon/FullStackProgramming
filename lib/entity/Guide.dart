@@ -22,4 +22,12 @@ class Guide {
       pointIndex: json['pointIndex'] as int,  // 정수라고 명시
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'distance': distance,
+    'duration': duration,
+    'instructions': instructions,
+    'type': type,
+    'pointIndex': pointIndex,
+  };
 }

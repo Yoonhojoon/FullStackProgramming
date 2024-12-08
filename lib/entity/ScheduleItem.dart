@@ -27,15 +27,20 @@ class ScheduleItem {
       endTime = startTime.add(newDuration);
     }
   }
-
-  // 포맷된 시간 문자열 얻기
+//포맷된 문자열
   String get timeRangeString {
-    final startFormatted = DateFormat('HH:mm').format(startTime);
-    final endFormatted = DateFormat('HH:mm').format(endTime);
-    return '$startFormatted ~ $endFormatted';
+    return '${_formatTime(startTime)} - ${_formatTime(endTime)}';
   }
 
   String get travelTimeString {
     return '${travelTime.inMinutes}분';
+  }
+
+  int get duration {
+    return endTime.difference(startTime).inMinutes;
+  }
+
+  String _formatTime(DateTime time) {
+    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
   }
 }

@@ -203,51 +203,123 @@ public class TripPlanningService {
     public List<UITripItemDTO> convertToUITripItems(OptimizedDailyPlanDto optimizedPlan, DailyPlan previousDayPlan) {
         List<UITripItemDTO> uiItems = new ArrayList<>();
         DailyPlan dailyPlan = optimizedPlan.getDailyPlan();
-        List<GuideDTO> guides = optimizedPlan.getGuides();
+        List<List<GuideDTO>> groupedGuides = groupGuidesByDestination(optimizedPlan.getGuides());
 
         // 시작 지점 추가 (전날 숙소 또는 당일 숙소)
         Destination startAccommodation = (previousDayPlan != null)
                 ? previousDayPlan.getAccommodation()
                 : dailyPlan.getAccommodation();
+
         uiItems.add(UITripItemDTO.builder()
                 .name(startAccommodation.getName())
                 .address(startAccommodation.getAddress())
                 .type("ACCOMMODATION")
                 .color("red")
                 .travelTimeMinutes(0)
-                .distanceToNext(guides.isEmpty() ? 0.0 : guides.get(0).getDistance() / 1000.0)
+                .distanceToNext(groupedGuides.isEmpty() || groupedGuides.get(0).isEmpty() ? 0.0 :
+                        groupedGuides.get(0).get(0).getDistance() / 1000.0)
+                .guides(new ArrayList<>())
                 .build());
 
-        // 중간 관광지들
-        for (int i = 0; i < dailyPlan.getDestinations().size(); i++) {
+        // destinations와 groupedGuides를 함께 순회
+        for (int i = 0; i < dailyPlan.getDestinations().size() && i < groupedGuides.size(); i++) {
             Destination dest = dailyPlan.getDestinations().get(i);
-            GuideDTO guide = guides.get(i);
-            Double nextDistance = (i < guides.size() - 1) ? guides.get(i + 1).getDistance() / 1000.0 : 0.0;
+            List<GuideDTO> destinationGuides = groupedGuides.get(i);
+
+            double nextDistance = 0.0;
+            if (i < groupedGuides.size() - 1 && !groupedGuides.get(i + 1).isEmpty()) {
+                nextDistance = groupedGuides.get(i + 1).get(0).getDistance() / 1000.0;
+            }
+
+            int totalTravelTime = calculateTotalDuration(destinationGuides);
 
             uiItems.add(UITripItemDTO.builder()
                     .name(dest.getName())
                     .address(dest.getAddress())
                     .type(dest.getType().toString())
                     .color("red")
-                    .travelTimeMinutes(guide.getDuration() / 60000)
+                    .travelTimeMinutes(totalTravelTime)
                     .distanceToNext(nextDistance)
-                    .guide(guide)
+                    .guides(destinationGuides)
                     .build());
         }
 
-        // 종료 지점 추가
+        // 마지막 숙소 추가
+        List<GuideDTO> lastGuides = !groupedGuides.isEmpty() ?
+                groupedGuides.get(groupedGuides.size() - 1) : new ArrayList<>();
+
         uiItems.add(UITripItemDTO.builder()
-                .name(startAccommodation.getName())
-                .address(startAccommodation.getAddress())
+                .name(dailyPlan.getAccommodation().getName())
+                .address(dailyPlan.getAccommodation().getAddress())
                 .type("ACCOMMODATION")
                 .color("red")
-                .travelTimeMinutes(guides.isEmpty() ? (int) 0L : guides.get(guides.size() - 1).getDuration() / 60000)
+                .travelTimeMinutes(lastGuides.isEmpty() ? 0 : calculateTotalDuration(lastGuides))
                 .distanceToNext(0.0)
+                .guides(lastGuides)
                 .build());
 
         return uiItems;
     }
 
+    private List<List<GuideDTO>> groupGuidesByDestination(List<GuideDTO> guides) {
+        List<List<GuideDTO>> groupedGuides = new ArrayList<>();
+        List<GuideDTO> currentGroup = new ArrayList<>();
+
+        for (GuideDTO guide : guides) {
+            currentGroup.add(guide);
+
+            // 87(경유지) 또는 88(목적지)이면 현재 그룹을 완성하고 새 그룹 시작
+            if (guide.getType() == 87 || guide.getType() == 88) {
+                groupedGuides.add(new ArrayList<>(currentGroup));
+                currentGroup = new ArrayList<>();
+            }
+        }
+
+        // 마지막 그룹이 있다면 추가
+        if (!currentGroup.isEmpty()) {
+            groupedGuides.add(currentGroup);
+        }
+
+        return groupedGuides;
+    }
+
+    private List<List<GuideDTO>> groupGuidesByDestination(DirectionsResponse directions) {
+        List<List<GuideDTO>> groupedGuides = new ArrayList<>();
+        List<DirectionsResponse.Route.Guide> allGuides = directions.getRoute().getTrafast().get(0).getGuide();
+
+        List<GuideDTO> currentGroup = new ArrayList<>();
+
+        for (DirectionsResponse.Route.Guide guide : allGuides) {
+            GuideDTO guideDTO = GuideDTO.builder()
+                    .distance(guide.getDistance())
+                    .duration(guide.getDuration())
+                    .instructions(guide.getInstructions())
+                    .type(guide.getType())
+                    .pointIndex(guide.getPointIndex())
+                    .build();
+
+            currentGroup.add(guideDTO);
+
+            // 87(경유지) 또는 88(목적지)이면 현재 그룹을 완성하고 새 그룹 시작
+            if (guide.getPointIndex() == 87 || guide.getPointIndex() == 88) {
+                groupedGuides.add(new ArrayList<>(currentGroup));
+                currentGroup = new ArrayList<>();
+            }
+        }
+
+        // 마지막 그룹이 있다면 추가
+        if (!currentGroup.isEmpty()) {
+            groupedGuides.add(currentGroup);
+        }
+
+        return groupedGuides;
+    }
+    // 총 이동 시간 계산을 위한 헬퍼 메서드
+    private int calculateTotalDuration(List<GuideDTO> guides) {
+        return guides.stream()
+                .mapToInt(GuideDTO::getDuration)
+                .sum() / 60000; // milliseconds to minutes
+    }
     public List<OptimizedDailyPlanDto> optimizeTrip(Itinerary itinerary, Map<Integer, Destination> accommodationsByDay,
                                                     List<Destination> spots) {
         System.out.println("Accommodations map size: " + accommodationsByDay.size());

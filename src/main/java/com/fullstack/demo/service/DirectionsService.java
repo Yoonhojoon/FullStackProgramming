@@ -1,5 +1,6 @@
 package com.fullstack.demo.service;
 
+import com.fullstack.demo.dto.GuideDTO;
 import com.fullstack.demo.dto.response.DirectionsResponse;
 import com.fullstack.demo.entity.naver.LatLng;
 import com.fullstack.demo.entity.naver.OptimizedRoute;
@@ -190,4 +191,6 @@ public class DirectionsService {
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         return R * c;
     }
+
+
 }

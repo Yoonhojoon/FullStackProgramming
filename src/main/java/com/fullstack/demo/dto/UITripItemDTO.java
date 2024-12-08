@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -14,5 +15,5 @@ public class UITripItemDTO {
     private String color;
     private Integer travelTimeMinutes;
     private Double distanceToNext;
-    private GuideDTO guide;
+    private List<GuideDTO> guides;
 }

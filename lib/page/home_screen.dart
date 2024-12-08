@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../service/auth_service.dart';
 import 'category/travel_category.dart';
 import 'popular_travel.dart';
 
@@ -7,12 +8,13 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final userName = AuthService().currentUserName ?? '게스트';
+
     return Scaffold(
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 상단 배경 이미지
             Container(
               height: 200,
               width: double.infinity,
@@ -34,13 +36,11 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
 
-            // 메인 컨텐츠
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 환영 메시지
                   Container(
                     padding: const EdgeInsets.all(16.0),
                     decoration: BoxDecoration(
@@ -54,19 +54,19 @@ class HomeScreen extends StatelessWidget {
                           child: const Icon(Icons.person, color: Colors.blue),
                         ),
                         const SizedBox(width: 12),
-                        const Column(
+                        Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            const Text(
                               '안녕하세요,',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey,
                               ),
                             ),
-                            Text(
-                              '윤호준님',
-                              style: TextStyle(
+                            Text(  // const 제거
+                              '$userName님',
+                              style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -79,7 +79,6 @@ class HomeScreen extends StatelessWidget {
 
                   const SizedBox(height: 24),
 
-                  // TravelCategory와 PopularTravel 컴포넌트
                    TravelCategory(),
                   const SizedBox(height: 24),
                    PopularTravel(),
@@ -90,11 +89,10 @@ class HomeScreen extends StatelessWidget {
         ),
       ),
 
-      // 플로팅 액션 버튼
       floatingActionButton: FloatingActionButton(
         onPressed: () {},
-        child: const Icon(Icons.add),
         backgroundColor: Colors.blue,
+        child: const Icon(Icons.add),
       ),
     );
   }

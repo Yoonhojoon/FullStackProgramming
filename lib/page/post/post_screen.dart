@@ -27,6 +27,36 @@ class PostScreen extends StatelessWidget {
             itemBuilder: (context, index) {
               final post = posts[index];
               return ListTile(
+                leading: Image.network(
+                  post['thumbnailImageUrl'],
+                  width: 50,
+                  height: 50,
+                  fit: BoxFit.cover,
+                  // 로딩 중 표시할 위젯
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return SizedBox(
+                      width: 50,
+                      height: 50,
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          value: loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded /
+                              loadingProgress.expectedTotalBytes!
+                              : null,
+                        ),
+                      ),
+                    );
+                  },
+                  // 에러 발생 시 표시할 위젯
+                  errorBuilder: (context, error, stackTrace) {
+                    return SizedBox(
+                      width: 50,
+                      height: 50,
+                      child: Icon(Icons.error),
+                    );
+                  },
+                ),
                 title: Text(post['postTitle']),
                 subtitle: Text(post['postContent']),
               );

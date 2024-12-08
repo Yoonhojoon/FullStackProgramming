@@ -8,29 +8,22 @@ class LoginPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: ThemeData(
-        brightness: Brightness.light,
-        primaryColor: const Color(0xFFFF7800),
-        scaffoldBackgroundColor: Colors.white,
-      ),
-      home: Scaffold(
-        body: SingleChildScrollView(
-          child: Container(
-            height: MediaQuery.of(context).size.height,
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const _HeaderSection(),
-                const SizedBox(height: 48),
-                _buildLoginButtons(context),
-                const SizedBox(height: 32),
-                const _DividerSection(),
-                const SizedBox(height: 32),
-                const _SignUpSection(),
-              ],
-            ),
+    return Scaffold(  // MaterialApp 대신 Scaffold만 반환
+      body: SingleChildScrollView(
+        child: Container(
+          height: MediaQuery.of(context).size.height,
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const _HeaderSection(),
+              const SizedBox(height: 48),
+              _buildLoginButtons(context),
+              const SizedBox(height: 32),
+              const _DividerSection(),
+              const SizedBox(height: 32),
+              const _SignUpSection(),
+            ],
           ),
         ),
       ),
@@ -40,29 +33,29 @@ class LoginPage extends StatelessWidget {
   Widget _buildLoginButtons(BuildContext context) {
     final authService = AuthService();
     return Column(
-      children: [
-      _LoginButton(
-      text: '구글로 시작하기',
-      icon: Image.network(
-        'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg',
-        height: 24,
-      ),
-      onPressed: () async {
-        final account = await authService.signInWithGoogle();
-        if (account != null) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const MainScreen()),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('로그인에 실패했습니다')),
-          );
-        }
-      },
-    ),
-  ]
-  );
+        children: [
+          _LoginButton(
+            text: '구글로 시작하기',
+            icon: Image.network(
+              'https://120812081208.s3.us-east-1.amazonaws.com/google.png',
+              height: 24,
+            ),
+            onPressed: () async {
+              final success = await authService.signInWithGoogle();
+              if (success) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const MainScreen()),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('로그인에 실패했습니다')),
+                );
+              }
+            },
+          ),
+        ]
+    );
 
   }
 }

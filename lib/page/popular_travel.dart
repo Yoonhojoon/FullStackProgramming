@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:mytour/entity/Category.dart';
+import 'package:mytour/page/post/create_post_screen.dart';
+
+import '../entity/Post.dart';
+import '../service/post_service.dart';
 
 class PopularTravel extends StatefulWidget {
   @override
@@ -6,53 +11,118 @@ class PopularTravel extends StatefulWidget {
 }
 
 class _PopularTravelState extends State<PopularTravel> {
-  // 예시 데이터
-  final Map<String, bool> likedPosts = {};
-  final Map<String, List<String>> comments = {
-    '남원 여행 테크트리': [
-      '좋은 정보 감사합니다!',
-      '광한루원이 정말 좋았어요',
-    ],
-  };
+  final PostService _postService = PostService();
+  List<Post> posts = [];
+  List<Category> categories = [];
+  String? selectedCategory;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInitialData();
+  }
+
+  Future<void> _loadInitialData() async {
+    await Future.wait([
+      _loadPosts(),
+      _loadCategories(),
+    ]);
+  }
+
+  Future<void> _loadPosts() async {
+    try {
+      final loadedPosts = await _postService.getPosts();
+      setState(() {
+        posts = loadedPosts;
+      });
+    } catch (e) {
+      // 에러 처리
+    }
+  }
+
+  Future<void> _loadCategories() async {
+    try {
+      final loadedCategories = await _postService.getCategories();
+      setState(() {
+        categories = loadedCategories;
+      });
+    } catch (e) {
+      // 에러 처리
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              '요즘 핫한 여행루트 🔥',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+    return Scaffold(
+      body: RefreshIndicator(
+        onRefresh: _loadInitialData,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      '요즘 핫한 여행루트 🔥',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: () => _showCreatePostDialog(context),
+                          icon: const Icon(Icons.add),
+                          label: const Text('글작성'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue,
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        TextButton(
+                          onPressed: () {},
+                          child: const Text('See all'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                ...posts.map((post) => _buildRouteCard(
+                  post.postTitle,
+                  post.thumbnailImageUrl ?? 'assets/images/placeholder.jpg',
+                  post.postContent,
+                  'Author',  // 사용자 정보 추가 필요
+                  post.createdAt.toString(),
+                )),
+              ],
             ),
-            TextButton(
-              onPressed: () {},
-              child: const Text('See all'),
-            ),
-          ],
+          ),
         ),
-        const SizedBox(height: 8),
-        _buildRouteCard(
-          '남원 여행 테크트리',
-          'assets/images/namwon.jpg',
-          '남원의 대표적인 여행지와 명소들을 소개하는 루트입니다.',
-          '김여행',
-          '2024.12.08',
+      ),
+    );
+  }
+  void _showCreatePostDialog(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CreatePostScreen(
+          onPostCreated: () {
+            _loadPosts(); // 글작성 완료 후 목록 새로고침
+          },
         ),
-      ],
+      ),
     );
   }
 
   Widget _buildRouteCard(String title, String imagePath, String description,
       String author, String date) {
-    bool isLiked = likedPosts[title] ?? false;
-    List<String> postComments = comments[title] ?? [];
-
+    print(imagePath);
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(
@@ -97,11 +167,30 @@ class _PopularTravelState extends State<PopularTravel> {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: Image.asset(
+                  child: Image.network(  // Image.asset을 Image.network로 변경
                     imagePath,
                     width: 80,
                     height: 80,
                     fit: BoxFit.cover,
+                    // 로딩 중 표시할 위젯
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return SizedBox(
+                        width: 80,
+                        height: 80,
+                        child: Center(
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    },
+                    // 에러 발생 시 표시할 위젯
+                    errorBuilder: (context, error, stackTrace) {
+                      return SizedBox(
+                        width: 80,
+                        height: 80,
+                        child: Icon(Icons.error),
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -137,82 +226,17 @@ class _PopularTravelState extends State<PopularTravel> {
             child: Row(
               children: [
                 IconButton(
-                  icon: Icon(
-                    isLiked ? Icons.favorite : Icons.favorite_border,
-                    color: isLiked ? Colors.red : null,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      likedPosts[title] = !isLiked;
-                    });
+                  icon: const Icon(Icons.favorite_border),
+                  onPressed: () async {
+                    // 좋아요 기능 구현
                   },
                 ),
-                Text('${isLiked ? 1 : 0}'),
+                const Text('0'),
                 const SizedBox(width: 16),
-                IconButton(
-                  icon: const Icon(Icons.comment_outlined),
-                  onPressed: () {
-                    _showCommentDialog(context, title);
-                  },
-                ),
-                Text('${postComments.length}'),
+                const Icon(Icons.remove_red_eye_outlined),
+                const Text('0'),
               ],
             ),
-          ),
-
-          // 댓글 섹션
-          if (postComments.isNotEmpty)
-            Container(
-              padding: const EdgeInsets.all(8.0),
-              decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: postComments.map((comment) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4.0),
-                  child: Text(comment),
-                )).toList(),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  void _showCommentDialog(BuildContext context, String postTitle) {
-    final TextEditingController commentController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('댓글 작성'),
-        content: TextField(
-          controller: commentController,
-          decoration: const InputDecoration(
-            hintText: '댓글을 입력하세요',
-          ),
-          maxLines: 3,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () {
-              if (commentController.text.isNotEmpty) {
-                setState(() {
-                  comments[postTitle] = [
-                    ...comments[postTitle] ?? [],
-                    commentController.text,
-                  ];
-                });
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('등록'),
           ),
         ],
       ),

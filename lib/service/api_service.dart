@@ -1,11 +1,5 @@
-import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:google_place/google_place.dart';
 import 'package:dio/dio.dart';
 import '../entity/DailySchedule.dart';
-import '../entity/TripItem.dart';
-
-import '../entity/DailyPlan.dart';
 import '../entity/Destination.dart';
 
 // API 서비스 클래스

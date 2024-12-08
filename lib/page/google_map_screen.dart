@@ -4,7 +4,6 @@ import 'package:google_place/google_place.dart';
 import 'package:mytour/destination_provider.dart';
 import 'package:mytour/service/api_service.dart';
 import 'package:provider/provider.dart';
-import 'package:mytour/destination_provider.dart';  // PlaceProvider import
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class GoogleMapScreen extends StatefulWidget {

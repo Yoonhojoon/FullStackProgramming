@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:mytour/page/plan/schedule_list_page.dart';
 import 'package:mytour/page/plan/scheduling_page.dart';
 import 'package:mytour/page/popular_travel.dart';
 import 'package:provider/provider.dart';
 import '../dailyplan_provider.dart';
-import '../entity/DailyPlan.dart';
 import '../entity/DailySchedule.dart';
-import '../entity/Destination.dart';
 import '../entity/ScheduleItem.dart';
 import '../entity/TripItem.dart';
 import 'google_map_screen.dart';

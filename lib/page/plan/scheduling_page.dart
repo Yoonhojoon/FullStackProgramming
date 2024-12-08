@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:calendar_date_picker2/calendar_date_picker2.dart';
 import 'package:mytour/page/plan/schedule_list_page.dart';
@@ -7,8 +5,6 @@ import 'package:mytour/service/api_service.dart';
 import 'package:provider/provider.dart';
 import 'package:mytour/destination_provider.dart';
 import 'package:http/http.dart' as http;
-
-import '../../entity/DailyPlan.dart';
 import '../../entity/DailySchedule.dart';
 import '../../entity/Destination.dart';
 import '../../entity/ScheduleItem.dart';

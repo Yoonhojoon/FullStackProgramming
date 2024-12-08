@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:mytour/entity/ScheduleItem.dart';
 import 'package:share_plus/share_plus.dart';
-import 'entity/DailyPlan.dart';
 import 'entity/DailySchedule.dart';
 
 class DailyPlanProvider extends ChangeNotifier {

@@ -1,16 +1,9 @@
-import 'dart:convert';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:mytour/entity/TripItem.dart';
 import 'package:mytour/page/plan/schedule_map_screen.dart';
 import 'package:provider/provider.dart';
-import 'package:share_plus/share_plus.dart';
-
 import '../../dailyplan_provider.dart';
-import '../../entity/DailyPlan.dart';
 import '../../entity/DailySchedule.dart';
-import '../../entity/Destination.dart';
 import '../../entity/Guide.dart';
 import '../../entity/ScheduleItem.dart';
 import '../../entity/TimeSelectionDialog.dart';

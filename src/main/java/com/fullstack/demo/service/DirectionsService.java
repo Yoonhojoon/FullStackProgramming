@@ -76,41 +76,52 @@ public class DirectionsService {
     }
 
     public OptimizedRoute getOptimizedRoute(LatLng start, LatLng goal, LatLng[] waypoints) {
+        // 입력값 검증
+        if (waypoints == null || waypoints.length == 0) {
+            // 경유지가 없는 경우 직접 경로만 반환
+            DirectionsResponse response = getDirections(start, goal, new ArrayList<>());
+            return new OptimizedRoute(new int[0], response);
+        }
+
         if (isSameLocation(start, goal)) {
             return handleSameStartAndGoal(start, waypoints);
         }
 
-        // waypoints만의 최적 순서를 찾음 (시작점과 도착점 제외)
-        int n = waypoints.length;
-        boolean[] visited = new boolean[n];
-        List<Integer> optimizedOrder = new ArrayList<>();
+        try {
+            // waypoints만의 최적 순서를 찾음
+            int n = waypoints.length;
+            boolean[] visited = new boolean[n];
+            List<Integer> optimizedOrder = new ArrayList<>();
 
-        // 시작점에서 가장 가까운 waypoint 찾기
-        int current = findNearestFromPoint(start, waypoints, visited);
-        visited[current] = true;
-        optimizedOrder.add(current);
-
-        // 나머지 waypoint들에 대해 Nearest Neighbor 적용
-        for (int i = 0; i < n - 1; i++) {
-            current = findNearestFromPoint(waypoints[current], waypoints, visited);
+            // 시작점에서 가장 가까운 waypoint 찾기
+            int current = findNearestFromPoint(start, waypoints, visited);
             visited[current] = true;
             optimizedOrder.add(current);
+
+            // 나머지 waypoint들에 대해 Nearest Neighbor 적용
+            for (int i = 0; i < n - 1; i++) {
+                current = findNearestFromPoint(waypoints[current], waypoints, visited);
+                visited[current] = true;
+                optimizedOrder.add(current);
+            }
+
+            // 최적화된 순서로 waypoint 리스트 재구성
+            List<LatLng> optimizedWaypoints = optimizedOrder.stream()
+                    .map(i -> waypoints[i])
+                    .collect(Collectors.toList());
+
+            // API 호출
+            DirectionsResponse response = getDirections(start, goal, optimizedWaypoints);
+
+            return new OptimizedRoute(
+                    optimizedOrder.stream()
+                            .mapToInt(Integer::intValue)
+                            .toArray(),
+                    response
+            );
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            throw new RuntimeException("Failed to optimize route: " + e.getMessage(), e);
         }
-
-        // 최적화된 순서로 waypoint 리스트 재구성
-        List<LatLng> optimizedWaypoints = optimizedOrder.stream()
-                .map(i -> waypoints[i])
-                .collect(Collectors.toList());
-
-        // API 호출
-        DirectionsResponse response = getDirections(start, goal, optimizedWaypoints);
-
-        return new OptimizedRoute(
-                optimizedOrder.stream()
-                        .mapToInt(Integer::intValue)
-                        .toArray(),
-                response
-        );
     }
 
     private boolean isSameLocation(LatLng location1, LatLng location2) {
@@ -122,11 +133,17 @@ public class DirectionsService {
 
     // 주어진 위치에서 가장 가까운 방문하지 않은 waypoint 찾기
     private int findNearestFromPoint(LatLng point, LatLng[] waypoints, boolean[] visited) {
+        if (waypoints == null || waypoints.length == 0) {
+            throw new IllegalArgumentException("Waypoints array cannot be empty");
+        }
+
         double minDist = Double.MAX_VALUE;
         int nearest = -1;
+        boolean hasUnvisited = false;
 
         for (int i = 0; i < waypoints.length; i++) {
             if (!visited[i]) {
+                hasUnvisited = true;
                 double dist = calculateDistance(
                         point.getLat(),
                         point.getLng(),
@@ -139,6 +156,11 @@ public class DirectionsService {
                 }
             }
         }
+
+        if (!hasUnvisited) {
+            throw new IllegalStateException("All waypoints have been visited");
+        }
+
         return nearest;
     }
 
